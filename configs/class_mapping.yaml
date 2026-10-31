@@ -1,0 +1,92 @@
+# IDD <-> COCO class mapping.
+#
+# PROVISIONAL: the IDD class list below is the expected taxonomy of the IDD
+# Detection release. It MUST be checked against the real annotation files with
+#   python scripts/inspect_annotations.py
+# and edited here if the observed class names differ. The order of `classes`
+# defines the YOLO class ids (0..N-1), so do not reorder after training starts.
+#
+# group:
+#   common          - has a meaningful COCO equivalent; baseline AP is comparable
+#   india_specific  - no COCO equivalent; baseline reported as N/A (never 0)
+#   ambiguous       - partial / taxonomy-dependent mapping; documented, not forced
+#
+# coco_ids: COCO class ids the baseline detector may predict for this IDD class
+#           (empty list = no equivalent).
+
+classes:
+  - name: person
+    group: common
+    coco_names: [person]
+    coco_ids: [0]
+    note: Direct match.
+  - name: rider
+    group: ambiguous
+    coco_names: [person]
+    coco_ids: [0]
+    note: COCO has no rider class; a rider is detected as person. Do not treat as a direct match.
+  - name: car
+    group: common
+    coco_names: [car]
+    coco_ids: [2]
+    note: Direct match.
+  - name: truck
+    group: common
+    coco_names: [truck]
+    coco_ids: [7]
+    note: Direct match.
+  - name: bus
+    group: common
+    coco_names: [bus]
+    coco_ids: [5]
+    note: Direct match.
+  - name: motorcycle
+    group: common
+    coco_names: [motorcycle]
+    coco_ids: [3]
+    note: Direct match.
+  - name: bicycle
+    group: common
+    coco_names: [bicycle]
+    coco_ids: [1]
+    note: Direct match.
+  - name: autorickshaw
+    group: india_specific
+    coco_names: []
+    coco_ids: []
+    note: No COCO class. Baseline is N/A, not zero.
+  - name: animal
+    group: ambiguous
+    coco_names: [bird, cat, dog, horse, sheep, cow, elephant, bear, zebra, giraffe]
+    coco_ids: [14, 15, 16, 17, 18, 19, 20, 21, 22, 23]
+    note: IDD animal is one class; COCO splits animals into species. Many-to-one, verify before reporting.
+  - name: traffic light
+    group: common
+    coco_names: [traffic light]
+    coco_ids: [9]
+    note: Direct match.
+  - name: traffic sign
+    group: ambiguous
+    coco_names: [stop sign]
+    coco_ids: [11]
+    note: COCO only has stop sign.
+  - name: vehicle fallback
+    group: india_specific
+    coco_names: []
+    coco_ids: []
+    note: Catch-all vehicle category, no COCO equivalent.
+  - name: caravan
+    group: india_specific
+    coco_names: []
+    coco_ids: []
+    note: No COCO equivalent; likely very rare.
+  - name: trailer
+    group: india_specific
+    coco_names: []
+    coco_ids: []
+    note: No COCO equivalent; likely very rare.
+  - name: train
+    group: common
+    coco_names: [train]
+    coco_ids: [6]
+    note: Direct match; likely very rare.

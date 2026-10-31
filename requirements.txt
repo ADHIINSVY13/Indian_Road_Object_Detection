@@ -1,0 +1,10 @@
+# Data / EDA dependencies (dataset side of the pipeline).
+# Exact versions for torch / ultralytics are pinned separately by the model lead.
+numpy
+pandas
+matplotlib
+pillow
+pyyaml
+tqdm
+pytest
+nbformat

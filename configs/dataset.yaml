@@ -1,0 +1,27 @@
+# Dataset configuration for the IDD Detection release used in this project.
+# Paths are relative to the repository root. Do not commit the data itself.
+
+release:
+  name: "IDD Detection"          # fill in the exact release after download
+  downloaded_on: ""              # YYYY-MM-DD
+  source_url: "https://idd.insaan.iiit.ac.in/dataset/details/"
+
+raw:
+  root: data/raw/IDD_Detection
+  image_dir: JPEGImages          # expected layout, confirm with inspect_annotations.py
+  annotation_dir: Annotations
+  annotation_format: voc_xml     # voc_xml (Pascal VOC style); change if inspection shows otherwise
+  image_extensions: [".jpg", ".jpeg", ".png"]
+  # Optional text files listing one sample stem per line (e.g. "seq/name").
+  # If a file is missing the split is reported as unavailable, never guessed.
+  split_files:
+    train: train.txt
+    val: val.txt
+    test: test.txt
+
+yolo:
+  root: data/yolo
+  image_mode: hardlink           # hardlink | copy | symlink | none
+  min_box_side_px: 2             # smaller boxes are flagged as tiny_box (kept)
+
+class_mapping: configs/class_mapping.yaml

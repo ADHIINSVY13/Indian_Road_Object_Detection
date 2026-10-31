@@ -1,0 +1,25 @@
+# Environments and caches
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+
+# Raw / converted dataset (never commit IDD)
+data/raw/
+data/yolo/
+data/*.zip
+data/*.tar*
+
+# Model weights and training output
+models/
+runs/
+*.pt
+*.pth
+*.onnx
+
+# Secrets
+.env
+*.key
