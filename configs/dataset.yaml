@@ -22,6 +22,7 @@ raw:
 yolo:
   root: data/yolo
   image_mode: hardlink           # hardlink | copy | symlink | none
+  max_side: null                 # e.g. 640: write resized JPEG copies (longer side), saves disk; null keeps originals
   min_box_side_px: 2             # smaller boxes are flagged as tiny_box (kept)
 
 class_mapping: configs/class_mapping.yaml

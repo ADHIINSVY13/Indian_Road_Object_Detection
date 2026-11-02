@@ -25,9 +25,12 @@ def main():
     ap.add_argument("--limit", type=int, help="convert only the first N samples per split")
     ap.add_argument("--check-images", action="store_true", help="also decode every converted image")
     ap.add_argument("--image-mode", choices=["hardlink", "copy", "symlink", "none"])
+    ap.add_argument("--max-side", type=int, help="resize images so the longer side is at most this many px (e.g. 640)")
     args = ap.parse_args()
 
     cfg = load_yaml(resolve(args.config))
+    if args.max_side:
+        cfg["yolo"]["max_side"] = args.max_side
     if args.image_mode:
         cfg["yolo"]["image_mode"] = args.image_mode
     classes = load_classes(resolve(cfg["class_mapping"]))

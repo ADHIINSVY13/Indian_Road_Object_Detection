@@ -99,3 +99,13 @@ def test_validator_catches_bad_labels(dataset):
     (yolo / "labels/train/seq1__a.txt").write_text("99 0.5 0.5 0.2 0.2\n0 1.5 0.5 0.2 0.2\nnonsense\n")
     codes = {i["code"] for i in validate_yolo_dataset(yolo, len(classes))}
     assert {"class_id_out_of_range", "coords_out_of_range", "bad_line_format"} <= codes
+
+
+def test_resize_keeps_labels_valid(dataset):
+    raw, raw_cfg, yolo_cfg, classes, tmp = dataset
+    yolo_cfg = {**yolo_cfg, "max_side": 64}
+    convert_dataset(raw_cfg, yolo_cfg, classes, Path("."))
+    yolo = Path(yolo_cfg["root"])
+    with Image.open(yolo / "images/train/seq1__a.jpg") as im:
+        assert im.size == (64, 32)
+    assert all(i["severity"] == "warning" for i in validate_yolo_dataset(yolo, len(classes), check_images=True))

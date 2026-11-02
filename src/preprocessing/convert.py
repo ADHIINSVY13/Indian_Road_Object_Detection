@@ -54,8 +54,21 @@ def find_image(raw_root: Path, image_dir: str, stem: str, exts: list[str]) -> Pa
     return None
 
 
-def place_image(src: Path, dst: Path, mode: str) -> None:
+def resize_image(src: Path, dst: Path, max_side: int) -> None:
+    """Save a copy whose longer side is at most max_side. Labels are normalized, so they stay valid."""
+    dst.parent.mkdir(parents=True, exist_ok=True)
+    with Image.open(src) as im:
+        scale = max_side / max(im.size)
+        if scale < 1:
+            im = im.resize((round(im.width * scale), round(im.height * scale)), Image.LANCZOS)
+        im.convert("RGB").save(dst, quality=90)
+
+
+def place_image(src: Path, dst: Path, mode: str, max_side: int | None = None) -> None:
     if mode == "none" or dst.exists():
+        return
+    if max_side:
+        resize_image(src, dst.with_suffix(".jpg"), max_side)
         return
     dst.parent.mkdir(parents=True, exist_ok=True)
     if mode == "hardlink":
@@ -71,7 +84,7 @@ def place_image(src: Path, dst: Path, mode: str) -> None:
         shutil.copy2(src, dst)
 
 
-def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_side, progress=None):
+def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_side, progress=None, max_side=None):
     raw_root = Path(raw_cfg["_abs_root"])
     cls_idx = class_index(classes)
     img_out = yolo_root / "images" / split
@@ -149,7 +162,7 @@ def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_sid
             stats["images_without_objects"] += 1
         name = flat_name(stem)
         (lbl_out / f"{name}.txt").write_text("\n".join(lines) + ("\n" if lines else ""), encoding="utf-8")
-        place_image(img_path, img_out / f"{name}{img_path.suffix.lower()}", image_mode)
+        place_image(img_path, img_out / f"{name}{img_path.suffix.lower()}", image_mode, max_side)
         manifest.append({"split": split, "stem": name, "width": w, "height": h, "n_boxes": len(lines)})
         stats["converted"] += 1
 
@@ -194,6 +207,7 @@ def convert_dataset(raw_cfg, yolo_cfg, classes, repo_root: Path, splits=SPLITS, 
         issues, manifest, class_counts, stats = convert_split(
             split, stems, raw_cfg, yolo_root, classes,
             yolo_cfg.get("image_mode", "hardlink"), float(yolo_cfg.get("min_box_side_px", 2)), progress,
+            yolo_cfg.get("max_side") or None,
         )
         all_issues += issues
         all_manifest += manifest
