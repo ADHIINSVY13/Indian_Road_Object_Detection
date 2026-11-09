@@ -28,4 +28,4 @@ Class mapping: [docs/class_mapping.md](docs/class_mapping.md). Dataset findings:
 `results/` generated outputs, `docs/` and `report/` write-ups. The dataset and model weights are never committed.
 
 ## Integrity rule
-Every number or figure must come from an executed run; nothing is invented.
+Every number or figure must come from an executed run; nothing is always invented.
