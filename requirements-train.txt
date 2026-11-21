@@ -1,0 +1,7 @@
+# Training-only dependencies (dataset pipeline deps are in requirements.txt).
+# Not installed on the laptop: it has no CUDA GPU, so a CPU install here would only mislead.
+# Install inside Colab, or on any machine with a GPU:
+#   pip install -r requirements-train.txt
+torch>=2.2
+torchvision>=0.17
+ultralytics>=8.3,<8.4

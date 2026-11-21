@@ -1,0 +1,16 @@
+class,train,val
+person,70319,18078
+rider,73108,24518
+car,65676,24843
+truck,20759,7078
+bus,13829,4916
+motorcycle,78119,25489
+bicycle,2573,569
+autorickshaw,24498,7782
+animal,4764,1460
+traffic light,2779,919
+traffic sign,9916,4287
+vehicle fallback,14992,6089
+caravan,125,11
+trailer,11,7
+train,47,13

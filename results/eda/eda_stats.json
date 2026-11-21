@@ -1,0 +1,167 @@
+{
+  "images_per_split": {
+    "train": 31569,
+    "val": 10225
+  },
+  "boxes_per_split": {
+    "train": 381515,
+    "val": 126059
+  },
+  "class_counts": {
+    "train": {
+      "person": 70319,
+      "rider": 73108,
+      "car": 65676,
+      "truck": 20759,
+      "bus": 13829,
+      "motorcycle": 78119,
+      "bicycle": 2573,
+      "autorickshaw": 24498,
+      "animal": 4764,
+      "traffic light": 2779,
+      "traffic sign": 9916,
+      "vehicle fallback": 14992,
+      "caravan": 125,
+      "trailer": 11,
+      "train": 47
+    },
+    "val": {
+      "person": 18078,
+      "rider": 24518,
+      "car": 24843,
+      "truck": 7078,
+      "bus": 4916,
+      "motorcycle": 25489,
+      "bicycle": 569,
+      "autorickshaw": 7782,
+      "animal": 1460,
+      "traffic light": 919,
+      "traffic sign": 4287,
+      "vehicle fallback": 6089,
+      "caravan": 11,
+      "trailer": 7,
+      "train": 13
+    }
+  },
+  "images_containing_class": {
+    "train": {
+      "person": 16669,
+      "rider": 19056,
+      "car": 19386,
+      "truck": 11719,
+      "bus": 7955,
+      "motorcycle": 21070,
+      "bicycle": 2229,
+      "autorickshaw": 10982,
+      "animal": 1696,
+      "traffic light": 1294,
+      "traffic sign": 5595,
+      "vehicle fallback": 8419,
+      "caravan": 124,
+      "trailer": 11,
+      "train": 46
+    },
+    "val": {
+      "person": 5047,
+      "rider": 6130,
+      "car": 6592,
+      "truck": 3933,
+      "bus": 2803,
+      "motorcycle": 7149,
+      "bicycle": 484,
+      "autorickshaw": 3411,
+      "animal": 398,
+      "traffic light": 410,
+      "traffic sign": 2342,
+      "vehicle fallback": 2891,
+      "caravan": 10,
+      "trailer": 7,
+      "train": 13
+    }
+  },
+  "annotations_per_image": {
+    "train": {
+      "count": 31569.0,
+      "mean": 12.085,
+      "std": 13.407,
+      "min": 1.0,
+      "50%": 7.0,
+      "max": 121.0
+    },
+    "val": {
+      "count": 10225.0,
+      "mean": 12.329,
+      "std": 13.92,
+      "min": 1.0,
+      "50%": 7.0,
+      "max": 125.0
+    }
+  },
+  "images_without_objects": {},
+  "image_resolutions": [
+    {
+      "split": "train",
+      "res": "1920x1080",
+      "n": 26989
+    },
+    {
+      "split": "train",
+      "res": "1280x964",
+      "n": 3431
+    },
+    {
+      "split": "train",
+      "res": "1921x1080",
+      "n": 1149
+    },
+    {
+      "split": "val",
+      "res": "1920x1080",
+      "n": 8535
+    },
+    {
+      "split": "val",
+      "res": "1280x964",
+      "n": 1065
+    },
+    {
+      "split": "val",
+      "res": "1280x720",
+      "n": 421
+    },
+    {
+      "split": "val",
+      "res": "1921x1080",
+      "n": 204
+    }
+  ],
+  "size_bucket_counts": {
+    "train": {
+      "small (<0.1% of image)": 150418,
+      "medium (0.1-1%)": 142321,
+      "large (>1%)": 88776
+    },
+    "val": {
+      "small (<0.1% of image)": 58167,
+      "medium (0.1-1%)": 41876,
+      "large (>1%)": 26016
+    }
+  },
+  "group_share_of_boxes": {
+    "train": {
+      "ambiguous": 87788,
+      "common": 254101,
+      "india_specific": 39626
+    },
+    "val": {
+      "ambiguous": 30265,
+      "common": 81905,
+      "india_specific": 13889
+    }
+  },
+  "imbalance_ratio_max_over_min_nonzero": 5756.0,
+  "classes_with_zero_boxes": {
+    "train": [],
+    "val": []
+  }
+}

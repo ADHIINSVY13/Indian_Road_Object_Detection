@@ -109,3 +109,31 @@ def test_resize_keeps_labels_valid(dataset):
     with Image.open(yolo / "images/train/seq1__a.jpg") as im:
         assert im.size == (64, 32)
     assert all(i["severity"] == "warning" for i in validate_yolo_dataset(yolo, len(classes), check_images=True))
+
+
+def test_resize_disabled_when_zero(dataset):
+    """--max-side 0 has to mean "keep the originals", not "fall back to the config value"."""
+    raw, raw_cfg, yolo_cfg, classes, tmp = dataset
+    yolo_cfg = {**yolo_cfg, "max_side": 0 or None}
+    convert_dataset(raw_cfg, yolo_cfg, classes, Path("."))
+    yolo = Path(yolo_cfg["root"])
+    with Image.open(yolo / "images/train/seq1__a.jpg") as im:
+        assert im.size == (200, 100)
+
+
+def test_train_summary_helpers(tmp_path):
+    """The per-group AP aggregation is the project's central comparison, so pin it down."""
+    from scripts.train_yolo import mean_ap_per_group, split_counts
+
+    per_class = {"person": 0.4, "car": 0.2, "autorickshaw": 0.1}
+    groups = {"person": "common", "car": "common", "autorickshaw": "india_specific"}
+    assert mean_ap_per_group(per_class, groups) == {"common": 0.3, "india_specific": 0.1}
+    assert mean_ap_per_group({"mystery": 0.5}, {}) == {"ungrouped": 0.5}  # never silently dropped
+
+    yolo = tmp_path / "yolo"
+    for split, n in (("train", 3), ("val", 1)):
+        d = yolo / "images" / split
+        d.mkdir(parents=True)
+        for i in range(n):
+            (d / f"{i}.jpg").write_bytes(b"")
+    assert split_counts(yolo) == {"train": 3, "val": 1}

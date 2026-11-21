@@ -1,0 +1,74 @@
+{
+  "root": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\data\\raw\\IDD_Detection",
+  "tree": {
+    "extensions": {
+      ".txt": 3,
+      "": 2,
+      ".swp": 1,
+      ".xml": 41857,
+      ".jpg": 46659
+    },
+    "files_per_top_level_dir": {
+      ".": 3,
+      "Annotations": 41860,
+      "JPEGImages": 46659
+    }
+  },
+  "n_annotation_files": 41857,
+  "split_files_line_counts": {
+    "train.txt": 31569,
+    "val.txt": 10225,
+    "test.txt": 4794
+  },
+  "detected_format": "voc_xml",
+  "first_files": [
+    {
+      "path": "Annotations\\frontFar\\BLR-2018-03-22_17-39-26_2_frontFar\\0000060.xml",
+      "content_head": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<annotation>\n\t<filename>0000060.jpg</filename>\n\t<folder>BLR-2018-03-22_17-39-26_2_frontFar_left_8</folder>\n\t<size>\n\t\t<width>1280</width>\n\t\t<height>964</height>\n\t\t<depth>3</depth>\n\t</size>\n\t<object>\n\t\t<name>truck</name>\n\t\t<bndbox>\n\t\t\t<xmin>92</xmin>\n\t\t\t<ymax>653</ymax>\n\t\t\t<xmax>456</xmax>\n\t\t\t<ymin>354</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>person</name>\n\t\t<bndbox>\n\t\t\t<xmin>804</xmin>\n\t\t\t<ymax>535</ymax>\n\t\t\t<xmax>843</xmax>\n\t\t\t<ymin>505</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>autorickshaw</name>\n\t\t<bndbox>\n\t\t\t<xmin>1018</xmin>\n\t\t\t<ymax>601</ymax>\n\t\t\t<xmax>1171</xmax>\n\t\t\t<ymin>473</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>person</name>\n\t\t<bndbox>\n\t\t\t<xmin>1196</xmin>\n\t\t\t<ymax>604</ymax>\n\t\t\t<xmax>1249</xmax>\n\t\t\t<ymin>479</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>car</name>\n\t\t<bndbox>\n\t\t\t<xmin>265</xmin>\n\t\t\t<ymax>962</ymax>\n\t\t\t<xmax>1279</xmax>\n\t\t\t<ymin>521</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>person</name>\n\t\t<bndbox>\n\t\t\t<xmin>19</xmin>\n\t\t\t<ymax>595</ymax>\n\t\t\t<xmax>46</xmax>\n\t\t\t<ymin>513</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>person</name>\n\t\t<bndbox>\n\t\t\t<xmin>5</xmin>\n\t\t\t<ymax>960</ymax>\n\t\t\t<xmax>204</xmax>\n\t\t\t<ymin>508</ymin>\n\t\t</bndbox>\n\t</object>\n</annotation>"
+    },
+    {
+      "path": "Annotations\\frontFar\\BLR-2018-03-22_17-39-26_2_frontFar\\000006_r.xml",
+      "content_head": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<annotation>\n\t<filename>0000060.jpg</filename>\n\t<folder>BLR-2018-03-22_17-39-26_2_frontFar_right_8</folder>\n\t<size>\n\t\t<width>1280</width>\n\t\t<height>964</height>\n\t\t<depth>3</depth>\n\t</size>\n\t<object>\n\t\t<name>truck</name>\n\t\t<bndbox>\n\t\t\t<xmin>26</xmin>\n\t\t\t<ymax>604</ymax>\n\t\t\t<xmax>396</xmax>\n\t\t\t<ymin>293</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>person</name>\n\t\t<bndbox>\n\t\t\t<xmin>708</xmin>\n\t\t\t<ymax>480</ymax>\n\t\t\t<xmax>754</xmax>\n\t\t\t<ymin>439</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>autorickshaw</name>\n\t\t<bndbox>\n\t\t\t<xmin>999</xmin>\n\t\t\t<ymax>541</ymax>\n\t\t\t<xmax>1132</xmax>\n\t\t\t<ymin>414</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>person</name>\n\t\t<bndbox>\n\t\t\t<xmin>1177</xmin>\n\t\t\t<ymax>557</ymax>\n\t\t\t<xmax>1227</xmax>\n\t\t\t<ymin>419</ymin>\n\t\t</bndbox>\n\t</object>\n\t<object>\n\t\t<name>car</name>\n\t\t<bndbox>\n\t\t\t<xmin>131</xmin>\n\t\t\t<ymax>963</ymax>\n\t\t\t<xmax>1277</xmax>\n\t\t\t<ymin>468</ymin>\n\t\t</bndbox>\n\t</object>\n</annotation>"
+    }
+  ],
+  "scan": {
+    "files_scanned": 3000,
+    "files_with_parse_problems": 0,
+    "class_names_observed": {
+      "motorcycle": 7381,
+      "rider": 6852,
+      "car": 6396,
+      "person": 6030,
+      "autorickshaw": 2240,
+      "truck": 1949,
+      "vehicle fallback": 1410,
+      "bus": 1401,
+      "traffic sign": 1052,
+      "animal": 547,
+      "traffic light": 271,
+      "bicycle": 209,
+      "caravan": 11,
+      "train": 3,
+      "trailer": 1
+    },
+    "image_sizes_in_xml": {
+      "1920x1080": 2552,
+      "1280x964": 326,
+      "1921x1080": 92,
+      "1280x720": 30
+    },
+    "box_coord_min_xmin_ymin_xmax_ymax": [
+      0.0,
+      0.0,
+      8.0,
+      20.0
+    ],
+    "box_coord_max_xmin_ymin_xmax_ymax": [
+      1916.0,
+      1055.0,
+      1921.0,
+      1080.0
+    ],
+    "box_format_note": "VOC convention: absolute pixel corners (xmin, ymin, xmax, ymax)"
+  }
+}

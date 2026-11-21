@@ -23,6 +23,25 @@ python scripts/analyze_dataset.py
 ```
 Class mapping: [docs/class_mapping.md](docs/class_mapping.md). Dataset findings: [docs/dataset_report.md](docs/dataset_report.md).
 
+## Training
+Training needs a CUDA GPU, and the project laptop has none, so it runs on a Colab T4.
+
+```bash
+python scripts/train_yolo.py --dry-run                       # validate the setup, train nothing
+```
+
+Full run: upload `data/idd_yolo_640.tar` to Drive, then open
+`notebooks/02_train_colab.ipynb` (regenerate with `python scripts/make_train_notebook.py`). The same
+entry point works anywhere:
+
+```bash
+python scripts/train_yolo.py --epochs 30 --batch 16 --name idd_yolo11n_e30
+```
+
+It writes `results/<name>_summary.json` with overall, per-class and per-group AP50-95. The per-group
+numbers are the comparison this project is built on: common vs India-specific classes, COCO-pretrained
+versus IDD-finetuned.
+
 ## Repository layout
 `configs/` configuration, `src/` library code, `scripts/` command-line entry points, `notebooks/` analysis,
 `results/` generated outputs, `docs/` and `report/` write-ups. The dataset and model weights are never committed.
