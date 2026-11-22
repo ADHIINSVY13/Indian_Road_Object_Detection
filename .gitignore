@@ -19,11 +19,13 @@ data/_eval/
 results/*.log
 
 # Model weights and training output
-models/
+models/*
+!models/best.pt
 runs/
 *.pt
 *.pth
 *.onnx
+!models/best.pt
 
 # Secrets
 .env

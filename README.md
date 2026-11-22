@@ -73,7 +73,7 @@ behind them, and likely questions about the code.
 
 ## Repository layout
 `configs/` configuration, `src/` library code, `scripts/` command-line entry points, `notebooks/` analysis,
-`results/` generated outputs, `docs/` and `report/` write-ups (the submission report is `report/P07_Report_ELCVIA.docx`, with a PDF copy). The dataset and model weights are never committed.
+`results/` generated outputs, `docs/` and `report/` write-ups (the submission report is `report/P07_Report_ELCVIA.docx`, with a PDF copy). The dataset is never committed. The one exception among weights is `models/best.pt` (10.8 MB, the IDD fine-tuned YOLO11n checkpoint, epoch 23 of 30, used for every reported fine-tuned number), kept in the repo so the results can be reproduced. `yolo11n.pt` (COCO baseline) is downloaded automatically by Ultralytics on first use.
 
 ## Integrity rule
 Every number or figure must come from an executed run; nothing is ever invented.
