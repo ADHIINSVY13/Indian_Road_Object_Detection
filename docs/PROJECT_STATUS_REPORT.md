@@ -12,11 +12,11 @@ India-specific classes (autorickshaw, ...) differently from common ones (car, bu
 |---|---|
 | Dataset inspected, converted to YOLO format (640 px), validated, EDA | `docs/dataset_report.md`, `results/eda/` (41,794 images, 507,574 boxes, 0 validation errors) |
 | Class mapping IDD ↔ COCO | `configs/class_mapping.yaml`, `docs/class_mapping.md` |
-| Fine-tuning `yolo11n` on Colab T4 (23 of 30 planned epochs; free quota ended) | `results/results.csv`, `results/training_curve.png`, `models/best.pt` (not committed) |
+| Fine-tuning `yolo11n` on Colab T4 (23 of 30 planned epochs; free quota ended) | `results/results.csv`, `results/training_curve.png`, `models/best.pt` (committed, 10.8 MB) |
 | COCO baseline vs fine-tuned, same val split | `results/eval_*.json`, `results/comparison.json`, `results/results_compare.png` |
 | Per-class precision and recall | `per_class_detail` in `results/eval_*.json`, `docs/results_report.md` §8 |
 | Qualitative side-by-side and failure cases | `results/qualitative/`, `docs/results_report.md` §9 |
-| Environment versions (local) | `results/environment_local_cpu_eval.json` |
+| Environment and hardware | `results/environment_colab_t4.json` (training: Tesla T4 15,360 MiB, torch 2.14.1+cu130, ultralytics 8.3.253), `results/environment_local_cpu_eval.json` (evaluation) |
 | Code explanation | `docs/CODE_WALKTHROUGH.md` |
 | Automatic tests | `tests/test_pipeline.py` (14 pass) |
 
@@ -30,7 +30,7 @@ val boxes have no COCO class at all. Full analysis and limitations: `docs/result
 no test labels); very few val boxes for `caravan`, `trailer`, `train`. See `docs/results_report.md` §10.
 
 ## Not done
-- Colab environment versions were not recorded during the run (run `scripts/record_environment.py --tag colab_t4` in a Colab cell next time).
+- The Python version of the Colab training session was not recorded.
 - Confusion matrix and PR/F1 curves from the training run are on Drive and not yet copied into `results/`.
 - Optional: resume the remaining 7 epochs (expected gain about +0.003 mAP50-95).
 

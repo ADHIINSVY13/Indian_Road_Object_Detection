@@ -1,0 +1,11 @@
+{
+  "source": "copied by hand from the output of step 0 and step 1 of notebooks/02_train_colab.ipynb in the session that trained models/best.pt (screenshot of the notebook output)",
+  "gpu": "Tesla T4",
+  "gpu_memory_mib": 15360,
+  "driver_version": "580.82.07",
+  "torch": "2.14.1+cu130",
+  "cuda_available": true,
+  "ultralytics": "8.3.253",
+  "python": "not recorded in that session",
+  "torchvision": "not recorded in that session"
+}
