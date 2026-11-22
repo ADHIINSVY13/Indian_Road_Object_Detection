@@ -42,9 +42,26 @@ It writes `results/<name>_summary.json` with overall, per-class and per-group AP
 numbers are the comparison this project is built on: common vs India-specific classes, COCO-pretrained
 versus IDD-finetuned.
 
+## Evaluation
+Inference only, so this runs on CPU:
+
+```bash
+python scripts/evaluate.py --model models/best.pt --tag finetuned
+python scripts/evaluate.py --model yolo11n.pt --tag coco_baseline --coco-baseline
+python scripts/compare_evals.py
+```
+
+`--coco-baseline` is not the same task as the other run. A COCO model predicts 80 classes, so the IDD
+val ground truth is translated into COCO ids first, and only for the classes the mapping calls a direct
+match (`group: common` with exactly one `coco_id`). `rider->person` and `traffic sign->stop sign` are
+excluded on purpose; `india_specific` classes are reported as N/A, never as 0.
+
+Each run writes `results/eval_<tag>.json` in the same shape, and `compare_evals.py` folds them into
+`results/comparison.json` plus `results/results_compare.png`. Full write-up: [docs/results_report.md](docs/results_report.md).
+
 ## Repository layout
 `configs/` configuration, `src/` library code, `scripts/` command-line entry points, `notebooks/` analysis,
 `results/` generated outputs, `docs/` and `report/` write-ups. The dataset and model weights are never committed.
 
 ## Integrity rule
-Every number or figure must come from an executed run; nothing is always invented.
+Every number or figure must come from an executed run; nothing is ever invented.

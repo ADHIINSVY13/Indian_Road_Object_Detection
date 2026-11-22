@@ -13,6 +13,7 @@ data/yolo/
 data/*.zip
 data/*.tar*
 data/*.log
+data/_eval/
 
 # results/ IS tracked on purpose: the figures it holds are embedded in docs/dataset_report.md
 results/*.log

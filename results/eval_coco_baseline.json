@@ -1,0 +1,44 @@
+{
+  "tag": "coco_baseline",
+  "model": "yolo11n.pt",
+  "mode": "coco_baseline",
+  "split": "val",
+  "images": 10225,
+  "imgsz": 640,
+  "conf": 0.001,
+  "iou": 0.7,
+  "boxes_kept": 81905,
+  "boxes_dropped_no_target_class": 44154,
+  "images_left_empty": 433,
+  "overall": {
+    "metrics/precision(B)": 0.3875,
+    "metrics/recall(B)": 0.2368,
+    "metrics/mAP50(B)": 0.2316,
+    "metrics/mAP50-95(B)": 0.1546,
+    "fitness": 0.1546
+  },
+  "per_class_ap50_95": {
+    "car": 0.3505,
+    "train": 0.3456,
+    "motorcycle": 0.1866,
+    "traffic light": 0.1553,
+    "bus": 0.1546,
+    "person": 0.1048,
+    "bicycle": 0.0836,
+    "truck": 0.0
+  },
+  "not_evaluable": {
+    "rider": "COCO has no rider class; a rider is detected as person. Do not treat as a direct match.",
+    "autorickshaw": "no COCO equivalent",
+    "animal": "IDD animal is one class; COCO splits animals into species. Many-to-one, verify before reporting.",
+    "traffic sign": "COCO only has stop sign.",
+    "vehicle fallback": "no COCO equivalent",
+    "caravan": "no COCO equivalent",
+    "trailer": "no COCO equivalent"
+  },
+  "per_group_ap50_95": {
+    "common": 0.1726
+  },
+  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\runs\\detect\\val5",
+  "command": "scripts\\evaluate.py --model yolo11n.pt --tag coco_baseline --coco-baseline --batch 32"
+}

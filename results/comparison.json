@@ -1,0 +1,189 @@
+{
+  "baseline": {
+    "tag": "coco_baseline",
+    "model": "yolo11n.pt",
+    "images": 10225,
+    "overall": {
+      "metrics/precision(B)": 0.3875,
+      "metrics/recall(B)": 0.2368,
+      "metrics/mAP50(B)": 0.2316,
+      "metrics/mAP50-95(B)": 0.1546,
+      "fitness": 0.1546
+    }
+  },
+  "finetuned": {
+    "tag": "finetuned",
+    "model": "models\\best.pt",
+    "images": 10225,
+    "overall": {
+      "metrics/precision(B)": 0.6446,
+      "metrics/recall(B)": 0.2796,
+      "metrics/mAP50(B)": 0.3154,
+      "metrics/mAP50-95(B)": 0.2025,
+      "fitness": 0.2025
+    }
+  },
+  "per_class": [
+    {
+      "class": "bus",
+      "group": "common",
+      "baseline_ap50_95": 0.1546,
+      "finetuned_ap50_95": 0.4866,
+      "delta": 0.332,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "car",
+      "group": "common",
+      "baseline_ap50_95": 0.3505,
+      "finetuned_ap50_95": 0.4261,
+      "delta": 0.0756,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "truck",
+      "group": "common",
+      "baseline_ap50_95": 0.0,
+      "finetuned_ap50_95": 0.3923,
+      "delta": 0.3923,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "motorcycle",
+      "group": "common",
+      "baseline_ap50_95": 0.1866,
+      "finetuned_ap50_95": 0.353,
+      "delta": 0.1664,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "person",
+      "group": "common",
+      "baseline_ap50_95": 0.1048,
+      "finetuned_ap50_95": 0.2305,
+      "delta": 0.1257,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "bicycle",
+      "group": "common",
+      "baseline_ap50_95": 0.0836,
+      "finetuned_ap50_95": 0.1531,
+      "delta": 0.0695,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "traffic light",
+      "group": "common",
+      "baseline_ap50_95": 0.1553,
+      "finetuned_ap50_95": 0.0588,
+      "delta": -0.0965,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "train",
+      "group": "common",
+      "baseline_ap50_95": 0.3456,
+      "finetuned_ap50_95": 0.0,
+      "delta": -0.3456,
+      "baseline_status": "scored"
+    },
+    {
+      "class": "rider",
+      "group": "ambiguous",
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.2764,
+      "delta": null,
+      "baseline_status": "COCO has no rider class; a rider is detected as person. Do not treat as a direct match."
+    },
+    {
+      "class": "traffic sign",
+      "group": "ambiguous",
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.1075,
+      "delta": null,
+      "baseline_status": "COCO only has stop sign."
+    },
+    {
+      "class": "animal",
+      "group": "ambiguous",
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.0836,
+      "delta": null,
+      "baseline_status": "IDD animal is one class; COCO splits animals into species. Many-to-one, verify before reporting."
+    },
+    {
+      "class": "autorickshaw",
+      "group": "india_specific",
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.4389,
+      "delta": null,
+      "baseline_status": "no COCO equivalent"
+    },
+    {
+      "class": "vehicle fallback",
+      "group": "india_specific",
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.03,
+      "delta": null,
+      "baseline_status": "no COCO equivalent"
+    },
+    {
+      "class": "caravan",
+      "group": "india_specific",
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.0,
+      "delta": null,
+      "baseline_status": "no COCO equivalent"
+    },
+    {
+      "class": "trailer",
+      "group": "india_specific",
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.0,
+      "delta": null,
+      "baseline_status": "no COCO equivalent"
+    }
+  ],
+  "per_group": {
+    "common": {
+      "classes": [
+        "bus",
+        "car",
+        "truck",
+        "motorcycle",
+        "person",
+        "bicycle",
+        "traffic light",
+        "train"
+      ],
+      "scored_by_baseline": 8,
+      "baseline_ap50_95": 0.1726,
+      "finetuned_ap50_95": 0.2626,
+      "delta": 0.0899
+    },
+    "ambiguous": {
+      "classes": [
+        "rider",
+        "traffic sign",
+        "animal"
+      ],
+      "scored_by_baseline": 0,
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.1558,
+      "delta": null
+    },
+    "india_specific": {
+      "classes": [
+        "autorickshaw",
+        "vehicle fallback",
+        "caravan",
+        "trailer"
+      ],
+      "scored_by_baseline": 0,
+      "baseline_ap50_95": null,
+      "finetuned_ap50_95": 0.1172,
+      "delta": null
+    }
+  }
+}

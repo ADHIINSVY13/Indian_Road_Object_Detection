@@ -137,3 +137,34 @@ def test_train_summary_helpers(tmp_path):
         for i in range(n):
             (d / f"{i}.jpg").write_bytes(b"")
     assert split_counts(yolo) == {"train": 3, "val": 1}
+
+
+def test_eval_dir_remaps_and_drops_unmapped(dataset, tmp_path):
+    """The COCO baseline may only be scored on classes it can actually predict, so every other
+    box has to disappear from the ground truth instead of being counted as a miss."""
+    from scripts.evaluate import build_eval_dir
+
+    raw, raw_cfg, yolo_cfg, classes, tmp = dataset
+    convert_dataset(raw_cfg, yolo_cfg, classes, Path("."))
+    yolo = Path(yolo_cfg["root"])
+
+    # person -> COCO 0, car -> COCO 2. autorickshaw and animal have no baseline class.
+    id_map = {0: 0, 2: 2}
+    out = tmp_path / "ev"
+    stems, kept, dropped, empty = build_eval_dir(yolo, "train", id_map, out, None)
+
+    assert len(stems) == 3
+    assert (kept, dropped, empty) == (2, 2, 1)
+    assert (out / "labels/train/seq1__a.txt").read_text().split()[0] == "2"   # car
+    assert (out / "labels/train/seq1__b.txt").read_text().split()[0] == "0"   # person
+    assert (out / "labels/train/seq2__c.txt").read_text() == ""               # animal dropped
+
+
+def test_group_means_averages_only_scored_classes():
+    from scripts.evaluate import group_means
+
+    groups = {"person": "common", "car": "common", "autorickshaw": "india_specific"}
+    # autorickshaw has no baseline number, so "common" must average the two that do exist
+    assert group_means({"person": 0.4, "car": 0.2}, groups) == {"common": 0.3}
+    assert group_means({}, groups) == {}
+

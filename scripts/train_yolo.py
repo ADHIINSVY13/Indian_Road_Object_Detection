@@ -35,6 +35,10 @@ def parse_args():
     ap.add_argument("--device", default="", help="'' = auto, '0' = first GPU, 'cpu' to force CPU")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--patience", type=int, default=10, help="early-stopping patience in epochs")
+    ap.add_argument("--cache", default="false", choices=["false", "ram", "disk"],
+                    help="cache decoded images; the 2.5 GB dataset fits in RAM on Colab and Kaggle")
+    ap.add_argument("--fraction", type=float, default=1.0,
+                    help="train on this fraction of the split, for a compute-limited run")
     ap.add_argument("--project", default="results/train", help="run directory; point at Drive on Colab")
     ap.add_argument("--name", default="idd_finetune")
     ap.add_argument("--resume", action="store_true", help="resume from <project>/<name>/weights/last.pt")
@@ -107,6 +111,8 @@ def main():
             device=args.device,
             seed=args.seed,
             patience=args.patience,
+            cache=False if args.cache == "false" else args.cache,
+            fraction=args.fraction,
             project=str(resolve(args.project)),
             name=args.name,
             exist_ok=True,
@@ -131,6 +137,8 @@ def main():
         "imgsz": args.imgsz,
         "batch": args.batch,
         "seed": args.seed,
+        "cache": args.cache,
+        "fraction": args.fraction,
         "data": str(data_yaml),
         "images": counts,
         "metrics": {k: round(float(v), 4) for k, v in metrics.results_dict.items()},

@@ -1,0 +1,45 @@
+{
+  "tag": "finetuned",
+  "model": "models\\best.pt",
+  "mode": "idd",
+  "split": "val",
+  "images": 10225,
+  "imgsz": 640,
+  "conf": 0.001,
+  "iou": 0.7,
+  "boxes_kept": 126059,
+  "boxes_dropped_no_target_class": 0,
+  "images_left_empty": 0,
+  "overall": {
+    "metrics/precision(B)": 0.6446,
+    "metrics/recall(B)": 0.2796,
+    "metrics/mAP50(B)": 0.3154,
+    "metrics/mAP50-95(B)": 0.2025,
+    "fitness": 0.2025
+  },
+  "per_class_ap50_95": {
+    "bus": 0.4866,
+    "autorickshaw": 0.4389,
+    "car": 0.4261,
+    "truck": 0.3923,
+    "motorcycle": 0.353,
+    "rider": 0.2764,
+    "person": 0.2305,
+    "bicycle": 0.1531,
+    "traffic sign": 0.1075,
+    "animal": 0.0836,
+    "traffic light": 0.0588,
+    "vehicle fallback": 0.03,
+    "caravan": 0.0,
+    "trailer": 0.0,
+    "train": 0.0
+  },
+  "not_evaluable": {},
+  "per_group_ap50_95": {
+    "ambiguous": 0.1558,
+    "common": 0.2626,
+    "india_specific": 0.1172
+  },
+  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\runs\\detect\\val4",
+  "command": "scripts\\evaluate.py --model models\\best.pt --tag finetuned --batch 32"
+}
