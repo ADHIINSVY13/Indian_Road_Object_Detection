@@ -17,6 +17,7 @@ import json
 import sys
 from pathlib import Path
 
+# Make `src` importable when this file is run directly as a script.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.config import load_classes, load_yaml, resolve
@@ -24,6 +25,7 @@ from src.preprocessing.convert import write_dataset_yaml
 
 
 def parse_args():
+    """Define the command-line options. Defaults reflect the settings used for the reported run."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", default="configs/dataset.yaml")
     ap.add_argument("--data-root", help="override yolo.root from the config, e.g. /content/idd_yolo on Colab")
@@ -51,7 +53,7 @@ def split_counts(yolo_root: Path) -> dict[str, int]:
     counts = {}
     for d in sorted((yolo_root / "images").glob("*")):
         if d.is_dir():
-            counts[d.name] = sum(1 for _ in d.glob("*.jpg"))
+            counts[d.name] = sum(1 for _ in d.glob("*.jpg"))  # count files without loading a list
     return counts
 
 
@@ -73,6 +75,7 @@ def main():
     root_val = args.data_root or cfg["yolo"]["root"]
     yolo_root = Path(root_val) if Path(root_val).is_absolute() else resolve(root_val)
 
+    # ---- sanity check before spending hours of GPU time ----
     counts = split_counts(yolo_root)
     if not counts.get("train"):
         sys.exit(f"No converted images under {yolo_root / 'images'}. Run scripts/prepare_dataset.py first.")
@@ -94,6 +97,7 @@ def main():
 
     run_dir = resolve(args.project) / args.name
     if args.resume:
+        # Continue an interrupted run (e.g. Colab disconnected) from its last saved checkpoint.
         ckpt = run_dir / "weights" / "last.pt"
         if not ckpt.exists():
             sys.exit(f"--resume given but {ckpt} is missing")
@@ -101,6 +105,8 @@ def main():
         model.train(resume=True)
         save_dir = run_dir
     else:
+        # Start from the COCO-pretrained weights; Ultralytics swaps the 80-class output layer for
+        # a 15-class one automatically because the dataset YAML lists 15 names.
         model = YOLO(args.model)
         model.train(
             data=str(data_yaml),
@@ -110,12 +116,12 @@ def main():
             workers=args.workers,
             device=args.device,
             seed=args.seed,
-            patience=args.patience,
+            patience=args.patience,  # stop early if validation stops improving for this many epochs
             cache=False if args.cache == "false" else args.cache,
             fraction=args.fraction,
             project=str(resolve(args.project)),
             name=args.name,
-            exist_ok=True,
+            exist_ok=True,      # reuse the run folder instead of creating name2, name3, ...
             pretrained=True,
             # Augmentation kept close to Ultralytics defaults on purpose: the claim under test is
             # "does IDD fine-tuning help", not "what is the best possible augmentation recipe".
@@ -123,16 +129,18 @@ def main():
         )
         save_dir = run_dir
 
+    # ---- final validation of the best checkpoint on the val split ----
     metrics = model.val(data=str(data_yaml), split="val", imgsz=args.imgsz, batch=args.batch, device=args.device)
 
     per_class = {}
-    box = getattr(metrics, "box", None)
+    box = getattr(metrics, "box", None)  # getattr with a default: tolerate a missing attribute
     if box is not None and getattr(box, "maps", None) is not None:
         # box.maps is indexed by class id (classes without ground truth hold the overall mAP), so
         # look each class up by id rather than zipping it against ap_class_index.
         idx = list(getattr(box, "ap_class_index", range(len(box.maps))))
         per_class = {classes[int(i)].name: round(float(box.maps[int(i)]), 4) for i in idx}
 
+    # ---- summary file: settings + results, so the report can cite exactly what was run ----
     summary = {
         "model": args.model,
         "epochs": args.epochs,

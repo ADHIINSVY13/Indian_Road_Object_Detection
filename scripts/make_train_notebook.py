@@ -1,11 +1,20 @@
-"""Regenerates notebooks/02_train_colab.ipynb (no outputs stored)."""
+"""Regenerates notebooks/02_train_colab.ipynb (no outputs stored).
+
+The Colab notebook is generated from this script instead of being edited by hand, so the notebook
+is always consistent with the training entry point (scripts/train_yolo.py) it calls. To change the
+notebook, edit the cell text below and re-run `python scripts/make_train_notebook.py`.
+"""
 from pathlib import Path
 
 import nbformat as nbf
 
+# Repository root: this file is <repo>/scripts/make_train_notebook.py.
 root = Path(__file__).resolve().parents[1]
 nb = nbf.v4.new_notebook()
 
+# SETUP is the text of ONE notebook code cell: the only place a user edits paths and settings
+# (Drive folder, repo URL/branch, model, epochs, batch size, run name). Everything after it in the
+# notebook reads these variables, so nothing else needs changing.
 SETUP = '''# ---- configure these once, then run the notebook top to bottom ----
 from pathlib import Path
 
@@ -27,6 +36,9 @@ print("tar   :", TAR, "exists:", Path(TAR).exists())
 print("data  :", DATA_DIR)
 print("run to:", f"{PROJECT}/{RUN_NAME}")'''
 
+# The notebook as an ordered list of cells: numbered markdown headings explain each step, and the
+# code cells that follow do it. Order: check GPU -> install -> mount Drive -> set paths -> unpack the
+# dataset -> get the code -> dry-run gate -> train -> (resume) -> read results -> save outputs.
 cells = [
     nbf.v4.new_markdown_cell(
         "# 02 Fine-tune YOLO on IDD (Colab GPU)\n"
@@ -82,5 +94,5 @@ cells = [
 
 nb["cells"] = cells
 out = root / "notebooks" / "02_train_colab.ipynb"
-nbf.write(nb, out)
+nbf.write(nb, out)  # writes the .ipynb JSON file, with no stored outputs
 print("wrote", out)

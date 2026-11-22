@@ -14,12 +14,18 @@ import platform
 import sys
 from pathlib import Path
 
+# Make `src` importable when run directly as a script.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.config import resolve
 
 
 def version_of(module: str) -> str | None:
+    """Return a package's version string, or None if it is not installed.
+
+    __import__ loads the module by its name given as text; every well-behaved package exposes
+    its version as __version__.
+    """
     try:
         return __import__(module).__version__
     except Exception:  # noqa: BLE001 - a missing package is a fact worth recording, not an error
@@ -27,21 +33,23 @@ def version_of(module: str) -> str | None:
 
 
 def gather() -> dict:
+    """Collect Python, OS, key package versions and GPU details into one dict."""
     info = {"python": platform.python_version(), "platform": platform.platform(),
             "packages": {m: version_of(m) for m in ("torch", "torchvision", "ultralytics", "numpy", "PIL", "yaml", "matplotlib")}}
     try:
         import torch
-        info["cuda_available"] = torch.cuda.is_available()
+        info["cuda_available"] = torch.cuda.is_available()   # is an NVIDIA GPU usable?
         info["cuda_version"] = torch.version.cuda
         info["gpu"] = torch.cuda.get_device_name(0) if torch.cuda.is_available() else None
     except Exception:  # noqa: BLE001
+        # torch is not installed on this machine (e.g. the laptop): record "unknown".
         info["cuda_available"] = None
     return info
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--tag", default="local")
+    ap.add_argument("--tag", default="local")  # label for the output file, e.g. "colab_t4"
     args = ap.parse_args()
     out = resolve("results") / f"environment_{args.tag}.json"
     out.parent.mkdir(parents=True, exist_ok=True)

@@ -26,6 +26,7 @@ from pathlib import Path
 
 from PIL import Image
 
+# Make `src` importable when run directly as a script.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.config import load_classes, load_yaml, resolve
@@ -34,6 +35,7 @@ from src.visualization.qualitative import (draw_boxes, median_box_area_fraction,
 
 
 def parse_args():
+    """Command-line options (which models, how many images, which seed, where to write)."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--config", default="configs/dataset.yaml")
     ap.add_argument("--finetuned", required=True)
@@ -51,6 +53,11 @@ def parse_args():
 
 
 def predict(model, path: Path, conf: float, device: str):
+    """Run one model on one image and return [(class_id, (x1, y1, x2, y2), confidence), ...].
+
+    Only detections above `conf` are kept. [0] picks the result for our single image, since
+    predict() returns one result per input.
+    """
     r = model.predict(str(path), conf=conf, imgsz=640, device=device, verbose=False)[0]
     return [(int(c), tuple(map(float, xyxy)), float(s))
             for c, xyxy, s in zip(r.boxes.cls.tolist(), r.boxes.xyxy.tolist(), r.boxes.conf.tolist())]
@@ -66,8 +73,12 @@ def main():
     stems = sorted(p.stem for p in (yolo_root / "images" / args.split).glob("*.jpg"))
     if not stems:
         sys.exit(f"No images under {yolo_root / 'images' / args.split}")
+
+    # A seeded random generator makes the "random" sample reproducible: the same seed always picks
+    # the same images, so nobody can accuse the gallery of being cherry-picked.
     rng = random.Random(args.seed)
     random_stems = rng.sample(stems, args.n_random)
+    # Candidate pool for failure hunting, excluding images already shown in the random gallery.
     pool = [s for s in rng.sample(stems, min(args.pool, len(stems))) if s not in random_stems]
 
     from ultralytics import YOLO  # late import so --help works without torch
@@ -75,6 +86,7 @@ def main():
     coco_names = [base.names[i] for i in range(len(base.names))]
 
     def load(stem):
+        """Open one val image and read its ground-truth boxes back into pixel coordinates."""
         img_path = yolo_root / "images" / args.split / f"{stem}.jpg"
         img = Image.open(img_path)
         gt = read_yolo_labels(yolo_root / "labels" / args.split / f"{stem}.txt", img.width, img.height)
@@ -85,24 +97,26 @@ def main():
     for stem in pool:
         img_path, img, gt = load(stem)
         if len(gt) < args.min_gt:
-            continue
+            continue  # near-empty images would give meaningless recall values
         pred = predict(fine, img_path, args.conf, args.device)
         rec = recall_at_iou(gt, [(c, b) for c, b, _ in pred])
-        scored.append((rec, -len(gt), stem))
-    scored.sort()
+        scored.append((rec, -len(gt), stem))  # ties broken by preferring images with MORE objects
+    scored.sort()  # ascending: worst recall first
     failure_stems = [s for _, _, s in scored[:args.n_failure]]
 
     out_dir = resolve(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
+    # index.json documents exactly how the pictures were chosen, so every figure is traceable.
     index = {"seed": args.seed, "split": args.split, "conf_display": args.conf, "recall_iou": 0.5,
              "finetuned": args.finetuned, "baseline": args.baseline,
              "failure_rule": f"lowest class-aware recall@IoU0.5 among {len(scored)} pool images with >= {args.min_gt} GT boxes",
              "random": [], "failure": []}
 
     def render(stem, prefix, i):
+        """Make one three-panel picture (truth | baseline | fine-tuned), save it, return its stats."""
         img_path, img, gt = load(stem)
-        ft = predict(fine, img_path, args.conf, args.device)
-        bs = predict(base, img_path, args.conf, args.device)
+        ft = predict(fine, img_path, args.conf, args.device)   # fine-tuned detections
+        bs = predict(base, img_path, args.conf, args.device)   # baseline detections
         rec = recall_at_iou(gt, [(c, b) for c, b, _ in ft])
         panels = [
             draw_boxes(img, [(c, b, None) for c, b in gt], idd_names, f"ground truth ({len(gt)} boxes)"),

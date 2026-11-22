@@ -4,8 +4,13 @@ from pathlib import Path
 
 import nbformat as nbf
 
+# Repository root: this file is <repo>/scripts/make_notebook.py, so go up one level from scripts/.
 root = Path(__file__).resolve().parents[1]
 nb = nbf.v4.new_notebook()
+
+# The notebook is described as a list of cells. Markdown cells hold explanations; code cells hold
+# the Python that runs when the notebook is opened. The notebook reuses the same functions as the
+# command-line scripts, so notebook and scripts can never disagree.
 cells = [
     nbf.v4.new_markdown_cell("# 01 Dataset exploration (IDD Detection)\nRun after `scripts/prepare_dataset.py`. All numbers come from the converted dataset; nothing is typed in by hand."),
     nbf.v4.new_code_cell("import sys, json\nfrom pathlib import Path\nsys.path.insert(0, str(Path.cwd().parent))\nimport pandas as pd\nfrom IPython.display import Image, display\nfrom src.data.config import load_classes, load_yaml, resolve\nfrom src.visualization.eda import load_boxes, compute_stats, run_eda\n\ncfg = load_yaml(resolve('configs/dataset.yaml'))\nclasses = load_classes(resolve(cfg['class_mapping']))\nnames = [c.name for c in classes]\ngroups = {c.name: c.group for c in classes}\nyolo = resolve(cfg['yolo']['root'])\nmanifest = pd.read_csv(yolo / 'manifest.csv')\nboxes = load_boxes(yolo, names)\nmanifest.groupby('split').size()"),
@@ -19,5 +24,5 @@ cells = [
 ]
 nb["cells"] = cells
 out = root / "notebooks" / "01_dataset_exploration.ipynb"
-nbf.write(nb, out)
+nbf.write(nb, out)  # writes the .ipynb JSON file
 print("wrote", out)
