@@ -132,6 +132,6 @@
     "common": 0.2626,
     "india_specific": 0.1172
   },
-  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\runs\\detect\\val7",
-  "command": "scripts/evaluate.py --config C:\\Users\\ASUS\\AppData\\Local\\Temp/dataset_abs.yaml --model C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/models/best.pt --tag finetuned --work-dir C:/p07eval"
+  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\.claude\\worktrees\\road-detection-project-plan-9efb77\\results\\eval_plots\\finetuned",
+  "command": "scripts/evaluate.py --config C:\\Users\\ASUS\\AppData\\Local\\Temp/dataset_abs.yaml --model C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/models/best.pt --tag finetuned --work-dir C:/p07eval --plots-dir results/eval_plots/finetuned"
 }

@@ -75,6 +75,9 @@ def parse_args():
     ap.add_argument("--iou", type=float, default=0.7)
     # Scratch folder for the temporary re-labelled copy of the split (safe to delete afterwards).
     ap.add_argument("--work-dir", default="data/_eval", help="scratch dataset built for the run")
+    # Optional: also save Ultralytics' diagnostic figures (confusion matrix, PR / F1 / P / R curves)
+    # into this folder. Off by default because drawing them is extra work not needed for the numbers.
+    ap.add_argument("--plots-dir", help="save confusion matrix and PR/F1 curves here, e.g. results/eval_plots/finetuned")
     return ap.parse_args()
 
 
@@ -262,8 +265,15 @@ def main():
     # ---- run Ultralytics' validator: it predicts on every image and computes the metrics ----
     # conf=0.001 keeps even very unsure detections, because AP integrates over the whole
     # precision-recall curve and needs them; iou=0.7 is the NMS (duplicate-removal) threshold.
+    # With --plots-dir the figures are written straight into that folder (project/name = its parent
+    # and its own name); without it Ultralytics picks its default run folder and draws nothing.
+    plot_kwargs = {}
+    if args.plots_dir:
+        plots_path = resolve(args.plots_dir)
+        plot_kwargs = dict(project=str(plots_path.parent), name=plots_path.name, exist_ok=True)
     metrics = model.val(data=str(data_yaml), split=args.split, imgsz=args.imgsz, batch=args.batch,
-                        device=args.device, conf=args.conf, iou=args.iou, plots=False, verbose=False)
+                        device=args.device, conf=args.conf, iou=args.iou,
+                        plots=bool(args.plots_dir), verbose=False, **plot_kwargs)
 
     # ---- pull the per-class numbers out, pairing each with the right class id ----
     # metrics.box holds the detection metrics. Its important arrays:

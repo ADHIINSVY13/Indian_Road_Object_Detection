@@ -15,6 +15,7 @@ India-specific classes (autorickshaw, ...) differently from common ones (car, bu
 | Fine-tuning `yolo11n` on Colab T4 (23 of 30 planned epochs; free quota ended) | `results/results.csv`, `results/training_curve.png`, `models/best.pt` (committed, 10.8 MB) |
 | COCO baseline vs fine-tuned, same val split | `results/eval_*.json`, `results/comparison.json`, `results/results_compare.png` |
 | Per-class precision and recall | `per_class_detail` in `results/eval_*.json`, `docs/results_report.md` §8 |
+| Confusion matrix, PR / F1 / P / R curves | `results/eval_plots/finetuned/` (`docs/results_report.md` §8) |
 | Qualitative side-by-side and failure cases | `results/qualitative/`, `docs/results_report.md` §9 |
 | Environment and hardware | `results/environment_colab_t4.json` (training: Tesla T4 15,360 MiB, torch 2.14.1+cu130, ultralytics 8.3.253), `results/environment_local_cpu_eval.json` (evaluation) |
 | Code explanation | `docs/CODE_WALKTHROUGH.md` |
@@ -31,7 +32,6 @@ no test labels); very few val boxes for `caravan`, `trailer`, `train`. See `docs
 
 ## Not done
 - The Python version of the Colab training session was not recorded.
-- Confusion matrix and PR/F1 curves from the training run are on Drive and not yet copied into `results/`.
 - Optional: resume the remaining 7 epochs (expected gain about +0.003 mAP50-95).
 
 ## A correction worth knowing
