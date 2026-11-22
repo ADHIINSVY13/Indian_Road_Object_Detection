@@ -20,6 +20,11 @@ from src.preprocessing.validate import validate_yolo_dataset
 
 
 def main():
+    """Run the whole data-preparation step: convert, then validate, then print a summary.
+
+    Why one script: the order matters (validate only makes sense after convert), and one command that
+    exits non-zero on failure is easy to repeat and to trust.
+    """
     # ---- command-line options ----
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", default="configs/dataset.yaml")
@@ -43,11 +48,12 @@ def main():
     # ---- step A: convert (tqdm draws a progress bar over the list of samples) ----
     report, issues = convert_dataset(cfg["raw"], cfg["yolo"], classes, repo_root, tuple(args.splits), args.limit, tqdm)
     for split, r in report["splits"].items():
-        print(split, r)
+        print(split, r)  # per-split counts: converted, skipped_*, boxes_kept, class_counts
 
     # ---- step B: validate the finished dataset independently of the converter ----
     yolo_root = resolve(cfg["yolo"]["root"])
     post = validate_yolo_dataset(yolo_root, len(classes), args.check_images)
+    # Save every finding of the second check next to the dataset, so it can be inspected afterwards.
     with open(yolo_root / "validation_issues.csv", "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=["split", "stem", "severity", "code", "detail"])
         w.writeheader()
@@ -56,6 +62,7 @@ def main():
     # ---- summary: how many of each kind of problem, and an overall pass/fail ----
     print("\nConversion issues by code:", dict(Counter(i["code"] for i in issues)))
     print("Post-conversion validation issues by code:", dict(Counter(i["code"] for i in post)))
+    # Warnings (e.g. duplicate boxes) are reported but allowed; only real errors fail the run.
     errors = [i for i in post if i["severity"] == "error"]
     print(f"Validation {'FAILED' if errors else 'passed'}: {len(errors)} errors, {len(post) - len(errors)} warnings")
     print(f"Reports in {yolo_root}")

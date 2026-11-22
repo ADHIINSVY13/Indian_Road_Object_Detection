@@ -9,6 +9,8 @@ later (e.g. why rare classes score near zero).
 """
 from __future__ import annotations
 
+# json saves the statistics; Path builds file paths; matplotlib draws the figures; numpy does the
+# log/clip maths; pandas holds the label data as tables (DataFrames).
 import json
 from pathlib import Path
 
@@ -35,12 +37,16 @@ def load_boxes(yolo_root: Path, class_names: list[str]) -> pd.DataFrame:
     a one-line groupby.
     """
     rows = []
+    # One folder per split under labels/ (train/, val/); one .txt label file per image inside it.
     for split_dir in sorted((yolo_root / "labels").glob("*")):  # train/, val/
         for lf in split_dir.glob("*.txt"):
+            # An image with no objects has an empty file: handle it instead of failing on split().
             text = lf.read_text(encoding="utf-8").strip()
             for line in text.splitlines() if text else []:
+                # YOLO line format: class_id x_centre y_centre width height (all normalised 0..1).
                 c, xc, yc, w, h = line.split()
                 rows.append((split_dir.name, lf.stem, int(c), float(xc), float(yc), float(w), float(h)))
+    # Turn the list of tuples into a table with named columns.
     df = pd.DataFrame(rows, columns=["split", "stem", "cls", "xc", "yc", "w", "h"])
     df["class"] = df["cls"].map(lambda i: class_names[i])   # id -> readable name
     df["area_rel"] = df["w"] * df["h"]                      # fraction of the image the box covers
@@ -51,6 +57,7 @@ def load_boxes(yolo_root: Path, class_names: list[str]) -> pd.DataFrame:
 
 def compute_stats(boxes: pd.DataFrame, manifest: pd.DataFrame, class_names: list[str], groups: dict[str, str]) -> dict:
     """Compute all summary numbers and return them as a JSON-friendly dict (saved as eda_stats.json)."""
+    # Start with the simplest facts: how many images and how many boxes each split has.
     stats: dict = {"images_per_split": manifest.groupby("split").size().to_dict(),
                    "boxes_per_split": boxes.groupby("split").size().to_dict()}
 
@@ -68,12 +75,14 @@ def compute_stats(boxes: pd.DataFrame, manifest: pd.DataFrame, class_names: list
     stats["annotations_per_image"] = (
         manifest.groupby("split")["n_boxes"].describe()[["count", "mean", "std", "min", "50%", "max"]].round(3).to_dict("index")
     )
+    # Images with zero boxes (the converter should leave none, so this is a consistency check).
     stats["images_without_objects"] = manifest[manifest["n_boxes"] == 0].groupby("split").size().to_dict()
 
     # The five most common image resolutions per split (built as "WIDTHxHEIGHT" strings).
     stats["image_resolutions"] = (manifest.assign(res=manifest["width"].astype(str) + "x" + manifest["height"].astype(str))
                                   .groupby("split")["res"].value_counts().groupby(level=0).head(5)
                                   .rename("n").reset_index().to_dict("records"))
+    # How many boxes fall in each size bucket (small / medium / large) per split.
     stats["size_bucket_counts"] = {s: g["size_bucket"].value_counts().to_dict() for s, g in boxes.groupby("split")}
 
     # Share of boxes per class GROUP (common / ambiguous / india_specific), which is the project's
@@ -84,6 +93,7 @@ def compute_stats(boxes: pd.DataFrame, manifest: pd.DataFrame, class_names: list
     if len(totals):
         # Imbalance ratio: biggest class divided by the smallest class that has at least one box.
         stats["imbalance_ratio_max_over_min_nonzero"] = float(totals.max() / totals[totals > 0].min())
+    # A class with 0 boxes in a split could never be learned or validated, so list any such class.
     stats["classes_with_zero_boxes"] = {s: [c for c in class_names if per_class.loc[s, c] == 0] for s in per_class.index}
     return stats
 
@@ -106,9 +116,10 @@ def plot_class_distribution(boxes, class_names, out: Path, source: str):
     Log scale is needed because the biggest class has ~100,000 boxes and the smallest ~18; on a
     linear axis the rare classes would be invisible.
     """
+    # Table: one row per class, one column per split, cell = number of boxes (0 if none).
     counts = boxes.groupby(["class", "split"]).size().unstack(fill_value=0).reindex(class_names, fill_value=0)
-    fig, ax = plt.subplots(figsize=(11, 5.5))
-    counts.plot.bar(ax=ax, width=0.8)
+    fig, ax = plt.subplots(figsize=(11, 5.5))  # figure size in inches
+    counts.plot.bar(ax=ax, width=0.8)           # grouped bars: train and val side by side per class
     ax.set_yscale("log")
     ax.set_ylabel("Number of boxes (log scale)")
     ax.set_xlabel("IDD class")
@@ -164,6 +175,7 @@ def plot_box_size(boxes, out: Path, source: str):
     axes[0].set_ylabel("Density")
     axes[0].set_title("Relative box area")
     axes[0].legend()
+    # Right panel: one box plot per class. Each `data` item holds the log10 areas of that class's boxes.
     order = list(boxes["class"].unique())
     data = [np.log10(boxes.loc[boxes["class"] == c, "area_rel"].clip(lower=1e-7)) for c in order]
     # showfliers=False hides extreme outlier dots so the boxes themselves stay readable.
@@ -195,14 +207,17 @@ def run_eda(yolo_root: Path, class_names: list[str], groups: dict[str, str], out
 
     Returns the stats dict (plus the list of figure file names) for printing or further use.
     """
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)  # create the output folder if needed
+    # manifest.csv (written by the converter) gives per-image facts: size and number of boxes.
     manifest = pd.read_csv(yolo_root / "manifest.csv")
     boxes = load_boxes(yolo_root, class_names)
+    # No boxes usually means the dataset was not converted yet; fail with a clear message.
     if boxes.empty:
         raise RuntimeError("No boxes found in converted labels; run prepare_dataset.py first.")
     # Footer text stamped on every figure so it can always be traced back to its data.
     source = f"Source: {yolo_root.as_posix()} | release: {release or 'unspecified'} | generated by scripts/analyze_dataset.py"
     stats = compute_stats(boxes, manifest, class_names, groups)
+    # Draw the five figures; each plot function saves a PNG and returns its path.
     figs = [
         plot_class_distribution(boxes, class_names, out_dir, source),
         plot_class_share(boxes, class_names, out_dir, source),
@@ -210,6 +225,7 @@ def run_eda(yolo_root: Path, class_names: list[str], groups: dict[str, str], out
         plot_box_size(boxes, out_dir, source),
         plot_size_buckets(boxes, class_names, out_dir, source),
     ]
+    # Also save the class-count table as a CSV, easy to open in a spreadsheet or cite in the report.
     counts = boxes.groupby(["class", "split"]).size().unstack(fill_value=0).reindex(class_names, fill_value=0)
     counts.to_csv(out_dir / "class_counts.csv")
     # default=str lets json.dumps cope with values it cannot serialise natively (e.g. numpy numbers).

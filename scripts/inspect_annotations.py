@@ -16,6 +16,11 @@ from src.preprocessing.inspect_annotations import inspect_dataset, to_markdown
 
 
 def main():
+    """Inspect the raw IDD download and save what was found (JSON and Markdown) under results/eda.
+
+    Why this is step 1: the converter is written against what the files really contain, not against
+    what we assumed about IDD. Run this first, read the output, then run prepare_dataset.py.
+    """
     # ---- read command-line options ----
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--config", default="configs/dataset.yaml")

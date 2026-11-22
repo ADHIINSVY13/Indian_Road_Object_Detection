@@ -67,6 +67,10 @@ def load_classes(mapping_path: str | Path) -> list[ClassInfo]:
 
     The position of a class in the YAML list *is* its YOLO class id, which is why the file warns
     never to reorder it after training has started: that would silently relabel every class.
+
+    Input : path of class_mapping.yaml. Output: list of ClassInfo, ordered by class id.
+    Why   : the project's whole comparison (common vs India-specific classes, COCO baseline vs
+            fine-tuned) is driven by this file, so loading it in one place keeps every script consistent.
     """
     cfg = load_yaml(mapping_path)
     classes = []
@@ -87,5 +91,9 @@ def load_classes(mapping_path: str | Path) -> list[ClassInfo]:
 
 
 def class_index(classes: list[ClassInfo]) -> dict[str, int]:
-    """Build a {class name -> YOLO id} lookup used when converting annotation labels to ids."""
+    """Build a {class name -> YOLO id} lookup used when converting annotation labels to ids.
+
+    Input : the ClassInfo list. Output: e.g. {"person": 0, "rider": 1, "car": 2, ...}.
+    Why   : a dict lookup is instant, which matters when ~500,000 boxes are converted.
+    """
     return {c.name: c.id for c in classes}

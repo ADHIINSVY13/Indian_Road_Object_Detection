@@ -21,7 +21,9 @@ IMAGE_EXTS = (".jpg", ".jpeg", ".png")
 
 def issue(split: str, stem: str, severity: str, code: str, detail: str = "") -> dict:
     """Create one issue record. Keeping the shape in one function guarantees every CSV row has
-    the same columns: which split, which image, how serious, a short machine code, free-text detail."""
+    the same columns: which split, which image, how serious, a short machine code, free-text detail.
+
+    Why a plain dict: it can go straight into csv.DictWriter, so logging a problem is one line of code."""
     return {"split": split, "stem": stem, "severity": severity, "code": code, "detail": detail}
 
 
@@ -32,6 +34,11 @@ def box_issues(xmin, ymin, xmax, ymax, width, height, min_side: float = 2.0) -> 
       non_positive_size      (error)   box has zero/negative width or height (or corners swapped)
       out_of_bounds_clipped  (warning) box pokes outside the image; the converter will clip it
       tiny_box               (warning) a side shorter than min_side pixels; kept but flagged
+
+    Inputs : box corners in pixels, the image width and height, and min_side (smallest sensible side).
+    Output : a list of (severity, code) tuples; an empty list means the box is fine.
+    Why    : annotation tools make mistakes. Errors would poison training (a box with no area has no
+             meaning), whereas warnings are repairable (clip) or only worth knowing about (tiny).
     """
     out: list[tuple[str, str]] = []
     # A valid box needs its right edge strictly right of the left edge, and bottom below top.
@@ -51,6 +58,11 @@ def clip_box(xmin, ymin, xmax, ymax, width, height):
 
     max(v, 0) lifts negative coordinates to 0 and min(.., size) pulls overshooting ones back to the
     image edge. The result is always within [0, width] x [0, height].
+
+    Input : box corners and the image size. Output: the four corrected corners (floats).
+    Why   : YOLO labels are fractions between 0 and 1. A box that sticks out of the picture would give
+            a fraction below 0 or above 1, which Ultralytics rejects. Clipping keeps the visible part
+            of the object instead of throwing the whole annotation away.
     """
     return (
         min(max(xmin, 0.0), float(width)),
@@ -65,6 +77,12 @@ def validate_yolo_dataset(yolo_root: str | Path, num_classes: int, check_images:
     duplicates, and image/label pairing. Optionally decode every image.
 
     Returns a list of issue dicts; an empty list means a perfectly clean dataset.
+
+    Inputs : yolo_root = dataset folder; num_classes = how many class ids are legal (here 15);
+             check_images = also open every image (slow, off by default).
+    Why this second pass exists: the converter checks the raw input, this function checks what was
+    actually written to disk. If the converter had a bug, only an independent re-read of the output
+    could catch it. It is the proof that the dataset is safe to train on.
     """
     yolo_root = Path(yolo_root)
     issues: list[dict] = []
@@ -75,25 +93,28 @@ def validate_yolo_dataset(yolo_root: str | Path, num_classes: int, check_images:
             continue
         split = split_dir.name
         img_dir = yolo_root / "images" / split
-        label_stems = set()  # names of every label file in this split, used for pairing later
+        # Names of every label file in this split. Compared with the image names below so a label
+        # without an image (or an image without a label) is noticed.
+        label_stems = set()
 
         # ---------- check every label file ----------
         for lf in split_dir.glob("*.txt"):
             stem = lf.stem  # file name without ".txt"
             label_stems.add(stem)
             seen = set()    # exact lines already met in this file, to detect duplicate boxes
-            text = lf.read_text(encoding="utf-8").strip()
+            text = lf.read_text(encoding="utf-8").strip()  # whole file as one string, outer blanks removed
             if not text:
                 # An empty label file means "no objects in this image". Legal in YOLO, but worth noting.
                 issues.append(issue(split, stem, "warning", "empty_label_file"))
             # enumerate(..., 1) numbers lines from 1 so messages match what an editor shows.
             for ln, line in enumerate(text.splitlines() if text else [], 1):
-                parts = line.split()
+                parts = line.split()  # split on whitespace -> ["7", "0.51", "0.62", "0.10", "0.20"]
                 # YOLO format is exactly: class x_center y_center width height
                 if len(parts) != 5:
                     issues.append(issue(split, stem, "error", "bad_line_format", f"line {ln}: {line!r}"))
                     continue
                 try:
+                    # class id is an integer, the other four are decimal fractions
                     cls = int(parts[0])
                     xc, yc, w, h = map(float, parts[1:])
                 except ValueError:
@@ -121,6 +142,7 @@ def validate_yolo_dataset(yolo_root: str | Path, num_classes: int, check_images:
             issues.append(issue(split, stem, "error", "image_without_label"))
 
         # ---------- optional: make sure every image can actually be decoded ----------
+        # A truncated JPEG would crash the data loader in the middle of training, hours into a run.
         if check_images:
             for stem, p in image_files.items():
                 try:

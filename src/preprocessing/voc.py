@@ -27,6 +27,8 @@ class VocObject:
 class VocAnnotation:
     """Everything parsed from one XML file."""
 
+    # Pascal VOC is an old, widely used annotation format: one XML file per image. Keeping the parsed
+    # result in a small class (instead of a loose dict) lets the rest of the code use named fields.
     path: Path                 # which file this came from (useful in error messages)
     width: int | None          # image width declared in the XML, None if missing/invalid
     height: int | None         # image height declared in the XML, None if missing/invalid
@@ -56,6 +58,10 @@ def parse_voc_xml(path: str | Path) -> VocAnnotation:
 
     Returns a VocAnnotation whose `problems` list explains everything that was skipped, so the
     caller can log it and carry on.
+
+    Input : path of one .xml file. Output: a VocAnnotation (size, objects, problems).
+    Why   : the converter must survive bad files. Returning problems as data (instead of raising) is
+            what lets one broken annotation be logged while the other 41,000 are still converted.
     """
     path = Path(path)
     try:
@@ -77,10 +83,10 @@ def parse_voc_xml(path: str | Path) -> VocAnnotation:
         problems.append("missing_or_invalid_size")
 
     # --- one <object> element per labelled item ---
-    objects: list[VocObject] = []
+    objects: list[VocObject] = []  # only objects with a name and four numeric coordinates end up here
     for i, obj in enumerate(root.iter("object")):  # iter() finds <object> tags at any depth
-        name = (obj.findtext("name") or "").strip()
-        box = obj.find("bndbox")
+        name = (obj.findtext("name") or "").strip()  # class name, e.g. "autorickshaw"
+        box = obj.find("bndbox")                     # the <bndbox> element holding the 4 corners
         if not name:
             problems.append(f"object_{i}: missing_name")
             continue

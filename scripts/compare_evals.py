@@ -10,6 +10,10 @@ The comparison is deliberately group-first. A single overall mAP hides the thing
 a COCO model cannot predict `india_specific` classes at all, so pooling every class into one
 average mixes a real number with a structural zero. Classes the baseline cannot score stay `None`
 and are excluded from its group mean, never counted as 0.
+
+Data flow: eval_coco_baseline.json + eval_finetuned.json  ->  one table row per IDD class
+(baseline AP, fine-tuned AP, difference)  ->  one summary per group  ->  comparison.json + a bar chart.
+This script does no model inference; it only combines numbers that evaluate.py already produced.
 """
 from __future__ import annotations
 
@@ -59,8 +63,10 @@ def mean(values: list[float]) -> float | None:
 
 
 def main():
+    """Build the per-class and per-group comparison, save it as JSON and as a bar chart."""
     args = parse_args()
     cfg = load_yaml(resolve("configs/dataset.yaml"))
+    # The class list (with groups) gives the row order and tells us which group each class is in.
     classes = load_classes(resolve(cfg["class_mapping"]))
 
     base = load_eval(resolve(args.baseline))
@@ -87,6 +93,8 @@ def main():
                              -(r["finetuned_ap50_95"] or 0)))
 
     # ---- per-group averages; unscored classes are left out, not counted as zero ----
+    # For each group collect only the numbers that exist. "scored_by_baseline" tells the reader how
+    # many classes the baseline mean is really based on (0 means the whole group is N/A for it).
     groups = {}
     for g in GROUP_ORDER:
         b_vals = [r["baseline_ap50_95"] for r in rows if r["group"] == g and r["baseline_ap50_95"] is not None]
@@ -100,6 +108,9 @@ def main():
             "delta": mean(d_vals),
         }
 
+    # The saved result: which runs were compared, every per-class row, and the group summaries.
+    # "overall" is kept for completeness but, as explained in the docstring, the two overall
+    # numbers cover different class sets and should not be quoted as one before/after pair.
     out = {
         "baseline": {"tag": base["tag"], "model": base["model"], "images": base["images"],
                      "overall": base["overall"]},
@@ -130,13 +141,14 @@ def main():
             ax.text(x + 0.2, r["finetuned_ap50_95"], f'{r["finetuned_ap50_95"]:.2f}',
                     ha="center", va="bottom", fontsize=6.5)
 
+    # Axis decoration: one tick per class (label = class name + group), rotated so names fit.
     ax.set_xticks(list(xs))
     ax.set_xticklabels([f'{r["class"]}\n({r["group"]})' for r in rows], rotation=45, ha="right", fontsize=8)
     ax.set_ylabel("AP50-95 on IDD val")
     ax.set_title("COCO pretrained vs IDD fine-tuned, per class")
     ax.legend()
     ax.grid(axis="y", alpha=0.3)
-    fig.tight_layout()
+    fig.tight_layout()  # stop labels from being cut off at the figure edge
     fig_path = resolve(args.out)
     fig_path.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(fig_path, dpi=150)
@@ -144,6 +156,7 @@ def main():
     # ---- console table (the numbers quoted in docs/results_report.md) ----
     print(f"{'group':16s} {'n':>3s} {'baseline':>9s} {'finetuned':>10s} {'delta':>7s}")
     for g, v in groups.items():
+        # "-" is printed for a missing mean; the :+.4f format adds an explicit + or - sign.
         b = "-" if v["baseline_ap50_95"] is None else f'{v["baseline_ap50_95"]:.4f}'
         f = "-" if v["finetuned_ap50_95"] is None else f'{v["finetuned_ap50_95"]:.4f}'
         d = "-" if v["delta"] is None else f'{v["delta"]:+.4f}'

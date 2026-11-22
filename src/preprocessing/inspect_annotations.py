@@ -26,7 +26,11 @@ IMAGE_EXTS = {".jpg", ".jpeg", ".png"}
 
 
 def summarize_tree(root: Path) -> dict:
-    """Count files by extension and by top-level folder, to see the dataset's overall shape."""
+    """Count files by extension and by top-level folder, to see the dataset's overall shape.
+
+    Input : the dataset root folder. Output: {"extensions": {...}, "files_per_top_level_dir": {...}}.
+    Why   : a quick sanity check that the download is complete (e.g. both JPEGs and XMLs are present).
+    """
     ext_counts: Counter = Counter()   # e.g. {".jpg": 46659, ".xml": 41857}
     top_dirs: Counter = Counter()     # e.g. {"JPEGImages": 46659, "Annotations": 41857}
     for p in root.rglob("*"):         # rglob walks every sub-folder recursively
@@ -43,6 +47,9 @@ def find_annotation_files(root: Path, ann_dir: str | None = None) -> list[Path]:
 
     The split lists (train.txt / val.txt / test.txt) are .txt files too, but they are file lists,
     not annotations, so they are excluded by name.
+
+    Input : dataset root and (optionally) the annotation folder name. Output: sorted list of file paths.
+    Why   : sorting makes the "first N files" shown in the report the same on every run.
     """
     base = root / ann_dir if ann_dir and (root / ann_dir).exists() else root
     return sorted(p for p in base.rglob("*") if p.is_file() and p.suffix.lower() in ANNOTATION_EXTS
@@ -54,6 +61,10 @@ def detect_format(sample: Path) -> str:
 
     An .xml file counts as Pascal VOC only if it contains both an <annotation> root and <bndbox>
     boxes; otherwise it is reported as "xml_other" so a human takes a look.
+
+    Input : one annotation file. Output: "voc_xml", "xml_other", "json", "txt" or the bare extension.
+    Why   : the converter is written for Pascal VOC XML. If the download were another format, we want
+            to find that out here, before converting anything.
     """
     ext = sample.suffix.lower()
     if ext == ".xml":
@@ -72,6 +83,11 @@ def inspect_dataset(root: str | Path, ann_dir: str | None = None, n_show: int = 
     n_show : how many annotation files to include verbatim, for reading by eye
     n_scan : how many randomly chosen annotation files to parse for class names / coordinate ranges
     seed   : fixes the random choice so two runs produce the same report
+
+    Returns a dict with the folder summary, split-file line counts, the first raw files, and (for VOC
+    XML) the class names seen, image sizes and box-coordinate ranges.
+    Why this exists: it is the evidence behind the converter's design. It is how we found the real
+    class names and the unusual order of the <bndbox> tags before writing any conversion code.
     """
     root = Path(root)
     if not root.exists():
@@ -129,7 +145,11 @@ def inspect_dataset(root: str | Path, ann_dir: str | None = None, n_show: int = 
 
 
 def to_markdown(result: dict) -> str:
-    """Render the inspection result as a readable Markdown report (saved next to the JSON)."""
+    """Render the inspection result as a readable Markdown report (saved next to the JSON).
+
+    Input : the dict from inspect_dataset. Output: one Markdown string.
+    Why   : JSON is for programs, Markdown is for people (and for pasting into the dataset report).
+    """
     lines = [f"# Annotation inspection\n", f"Root: `{result['root']}`\n"]
     lines.append(f"- Annotation files found: {result['n_annotation_files']}")
     lines.append(f"- Detected format: {result.get('detected_format', 'n/a')}")

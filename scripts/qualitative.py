@@ -15,6 +15,11 @@ of every image (box count, median box size, recall), so each picture can be trac
 interpretation in the report is marked as a hypothesis.
 
 The baseline is drawn with its raw 80 COCO class names: it has no IDD classes, which is the point.
+
+Why a qualitative step at all: mAP is one number per class and cannot show WHAT the model gets wrong.
+Looking at pictures shows the failure patterns (tiny objects, crowds, a COCO label such as "truck"
+on an auto-rickshaw) that the tables only hint at. The helper functions that do the box maths and
+the drawing live in src/visualization/qualitative.py so they can be unit-tested.
 """
 from __future__ import annotations
 
@@ -37,18 +42,24 @@ from src.visualization.qualitative import (draw_boxes, median_box_area_fraction,
 def parse_args():
     """Command-line options (which models, how many images, which seed, where to write)."""
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--config", default="configs/dataset.yaml")
-    ap.add_argument("--finetuned", required=True)
-    ap.add_argument("--baseline", required=True)
-    ap.add_argument("--split", default="val")
-    ap.add_argument("--n-random", type=int, default=8)
-    ap.add_argument("--n-failure", type=int, default=8)
+    ap.add_argument("--config", default="configs/dataset.yaml")   # dataset paths and class mapping
+    ap.add_argument("--finetuned", required=True)                  # weights of the IDD fine-tuned model
+    ap.add_argument("--baseline", required=True)                   # weights of the stock COCO model
+    ap.add_argument("--split", default="val")                      # images are drawn from this split
+    ap.add_argument("--n-random", type=int, default=8)             # size of the random gallery
+    ap.add_argument("--n-failure", type=int, default=8)            # size of the failure gallery
+    # How many random val images are examined when hunting for failures (scanning all 10,225 on a
+    # CPU would be slow, so a seeded sample of 400 is used).
     ap.add_argument("--pool", type=int, default=400, help="seeded candidate images scanned for failures")
+    # Images with fewer ground-truth boxes than this are skipped: with 1-2 objects, "recall 0" says little.
     ap.add_argument("--min-gt", type=int, default=5, help="ignore near-empty images when ranking failures")
+    # The seed fixes Python's random generator, so the same images are chosen on every run.
     ap.add_argument("--seed", type=int, default=0)
+    # Only detections at or above this confidence are drawn. 0.25 keeps the pictures readable; it is
+    # NOT the threshold used for AP (that is 0.001 in evaluate.py).
     ap.add_argument("--conf", type=float, default=0.25, help="display threshold (not the AP threshold)")
-    ap.add_argument("--device", default="cpu")
-    ap.add_argument("--out", default="results/qualitative")
+    ap.add_argument("--device", default="cpu")                     # inference on CPU is enough
+    ap.add_argument("--out", default="results/qualitative")        # folder for the pictures + index.json
     return ap.parse_args()
 
 
@@ -64,12 +75,14 @@ def predict(model, path: Path, conf: float, device: str):
 
 
 def main():
+    """Choose the images (random + failure cases), draw three-panel pictures, write index.json."""
     args = parse_args()
     cfg = load_yaml(resolve(args.config))
     classes = load_classes(resolve(cfg["class_mapping"]))
-    idd_names = [c.name for c in classes]
+    idd_names = [c.name for c in classes]   # class id -> IDD name, used to label ground truth and fine-tuned boxes
     yolo_root = resolve(cfg["yolo"]["root"])
 
+    # All val image names (without extension); sorted so a given seed always gives the same picks.
     stems = sorted(p.stem for p in (yolo_root / "images" / args.split).glob("*.jpg"))
     if not stems:
         sys.exit(f"No images under {yolo_root / 'images' / args.split}")
@@ -82,7 +95,8 @@ def main():
     pool = [s for s in rng.sample(stems, min(args.pool, len(stems))) if s not in random_stems]
 
     from ultralytics import YOLO  # late import so --help works without torch
-    fine, base = YOLO(args.finetuned), YOLO(args.baseline)
+    fine, base = YOLO(args.finetuned), YOLO(args.baseline)   # load both models once, reuse for every image
+    # The baseline predicts COCO ids, so its boxes must be labelled with the 80 COCO names.
     coco_names = [base.names[i] for i in range(len(base.names))]
 
     def load(stem):
@@ -93,6 +107,9 @@ def main():
         return img_path, img, gt
 
     # ---- failure candidates: score the pool with the fine-tuned model only ----
+    # Failure = low recall: the share of true objects the model found. It is computed class-aware at
+    # IoU 0.5 by recall_at_iou (greedy matching, see src/visualization/qualitative.py). Only the
+    # fine-tuned model is scored here because the question is where OUR model struggles.
     scored = []
     for stem in pool:
         img_path, img, gt = load(stem)
@@ -129,6 +146,7 @@ def main():
                 "finetuned_detections": len(ft), "finetuned_recall_iou50": round(rec, 3),
                 "median_gt_box_area_fraction": round(median_box_area_fraction(gt, img.width, img.height) or 0, 5)}
 
+    # Render both galleries; each call saves one picture and returns its statistics for index.json.
     for i, stem in enumerate(random_stems):
         index["random"].append(render(stem, "random", i))
         print("random", i, stem)
@@ -136,6 +154,7 @@ def main():
         index["failure"].append(render(stem, "failure", i))
         print("failure", i, stem)
 
+    # Save the log of choices and per-image numbers next to the pictures.
     (out_dir / "index.json").write_text(json.dumps(index, indent=2), encoding="utf-8")
     print(f"written to {out_dir}")
 

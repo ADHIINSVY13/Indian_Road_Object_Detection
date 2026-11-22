@@ -16,6 +16,10 @@ def iou(a, b) -> float:
 
     IoU = overlap area / combined area, from 0 (no overlap) to 1 (identical boxes). It is the
     standard way to decide whether a predicted box "matches" a ground-truth box.
+
+    Worked example: A = (0,0,10,10) and B = (5,0,15,10). Overlap is 5 x 10 = 50, each box has area
+    100, so the union is 100 + 100 - 50 = 150 and IoU = 50 / 150 = 1/3. The unit test in
+    tests/test_pipeline.py checks exactly this value.
     """
     # The overlap rectangle runs from the larger of the left/top edges to the smaller of the
     # right/bottom edges.
@@ -33,6 +37,15 @@ def recall_at_iou(gt: list[tuple[int, tuple]], pred: list[tuple[int, tuple]], th
 
     Each prediction can explain at most one ground-truth box (greedy, best IoU first), so a single
     large box cannot "find" a whole crowd. Items are (class_id, (x1, y1, x2, y2)).
+
+    Inputs : gt   - ground-truth boxes of one image; pred - the model's boxes for the same image
+             thr  - minimum IoU for a match (0.5 is the usual "detected" definition)
+    Output : a number from 0.0 (nothing found) to 1.0 (everything found)
+
+    Why greedy matching: every possible (truth, prediction) pair is ranked by IoU and accepted from
+    the best downwards, skipping boxes already used. That mirrors how detection benchmarks pair boxes,
+    and it stops one huge prediction from counting as a hit for many small objects in a crowd.
+    Why recall and not precision here: a "failure" image is one where real objects are MISSED.
     """
     if not gt:
         return 1.0  # nothing to find, so nothing was missed
@@ -57,6 +70,9 @@ def read_yolo_labels(path, width: int, height: int) -> list[tuple[int, tuple]]:
     """YOLO label file (normalized cx cy w h) -> [(class_id, (x1, y1, x2, y2) in pixels)].
 
     Converts back from YOLO's centre/size fractions to pixel corners so boxes can be drawn.
+
+    Example: on a 100 x 100 image the line "3 0.5 0.5 0.2 0.4" means class 3, centre (50, 50), width 20,
+    height 40, so the corners are (40, 30) and (60, 70). The test test_read_yolo_labels checks this.
     """
     out = []
     for line in open(path, encoding="utf-8").read().splitlines():
@@ -70,7 +86,12 @@ def read_yolo_labels(path, width: int, height: int) -> list[tuple[int, tuple]]:
 
 
 def median_box_area_fraction(gt: list[tuple[int, tuple]], width: int, height: int) -> float | None:
-    """Median box area as a fraction of the image; small values mean a scene of tiny objects."""
+    """Median box area as a fraction of the image; small values mean a scene of tiny objects.
+
+    The median (middle value) is used instead of the mean so one huge box cannot hide that most
+    objects are tiny. Example: 0.001 means a typical object covers 0.1% of the picture. Returns None
+    when the image has no boxes. This is the measurement behind the "failures are small objects" finding.
+    """
     areas = sorted((b[2] - b[0]) * (b[3] - b[1]) / (width * height) for _, b in gt)
     return areas[len(areas) // 2] if areas else None  # middle element of the sorted list
 
@@ -81,7 +102,12 @@ _PALETTE = ["#e6194b", "#3cb44b", "#4363d8", "#f58231", "#911eb4", "#46a6a6", "#
 
 
 def draw_boxes(image: Image.Image, boxes: list[tuple[int, tuple, float | None]], names, title: str) -> Image.Image:
-    """Return a copy with boxes + labels drawn and a title bar. Items are (class_id, xyxy, conf|None)."""
+    """Return a copy with boxes + labels drawn and a title bar. Items are (class_id, xyxy, conf|None).
+
+    Inputs : image - the picture; boxes - what to draw; names - class id -> text label list
+             (IDD names for truth and fine-tuned boxes, COCO names for the baseline); title - header text.
+    Output : a new image 20 pixels taller than the input (the title bar); the input is not modified.
+    """
     im = image.convert("RGB").copy()  # copy so the caller's image is never modified
     d = ImageDraw.Draw(im)
     for cid, (x1, y1, x2, y2), conf in boxes:

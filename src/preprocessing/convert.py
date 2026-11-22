@@ -38,6 +38,11 @@ def flat_name(stem: str) -> str:
     IDD stems look like "frontFar/BLR-2018-.../0000060". YOLO expects images and labels in one folder
     per split, so folder separators become double underscores: "frontFar__BLR-2018-...__0000060".
     Backslashes are normalised first so the result is the same on Windows and Linux.
+
+    Input : a stem such as "frontFar/BLR-2018-03-22/0000060" (no extension).
+    Output: one flat name with no folder separators.
+    Why   : the same frame number (e.g. 0000060) exists in many sequences, so the sequence name must stay
+            in the file name or two images would overwrite each other once everything sits in one folder.
     """
     return stem.replace("\\", "/").strip("/").replace("/", "__")
 
@@ -47,6 +52,11 @@ def read_split_stems(raw_root: Path, split_file: str | None) -> list[str] | None
 
     Returning None (instead of guessing) lets the caller report "this split is unavailable", which is
     exactly what we want for the IDD test split that ships without labels.
+
+    Input : raw_root = folder holding the split files; split_file = e.g. "train.txt" from dataset.yaml.
+    Output: a list of stems ("seq/frame"), or None when there is no such file.
+    Why   : the official split files decide which image is train and which is val, so we follow them
+            instead of making our own random split (that would make results hard to compare).
     """
     if not split_file:
         return None
@@ -63,7 +73,12 @@ def read_split_stems(raw_root: Path, split_file: str | None) -> list[str] | None
 
 
 def find_image(raw_root: Path, image_dir: str, stem: str, exts: list[str]) -> Path | None:
-    """Locate the image for a stem by trying each allowed extension; None if none exists."""
+    """Locate the image for a stem by trying each allowed extension; None if none exists.
+
+    Input : the raw folder, the image sub-folder name, the stem, and a list such as [".jpg", ".png"].
+    Output: the full path of the first image that exists, or None.
+    Why   : the XML only names the sample, not the picture format, so we look for the file ourselves.
+    """
     for ext in exts:
         p = raw_root / image_dir / f"{stem}{ext}"
         if p.exists():
@@ -75,6 +90,11 @@ def resize_image(src: Path, dst: Path, max_side: int) -> None:
     """Save a copy whose longer side is at most max_side. Labels are normalized, so they stay valid.
 
     Boxes are stored as fractions of the image, so shrinking the picture does not move them.
+
+    Input : src = original image, dst = where to save, max_side = largest allowed width/height in pixels.
+    Output: nothing returned; a JPEG is written to dst.
+    Why   : the raw frames are 1920x1080. YOLO trains at 640 px anyway, so full-size files would only
+            waste disk, Drive upload time and data-loading time (the 640 px set is 2.48 GB).
     """
     dst.parent.mkdir(parents=True, exist_ok=True)
     with Image.open(src) as im:
@@ -94,6 +114,9 @@ def place_image(src: Path, dst: Path, mode: str, max_side: int | None = None) ->
     mode "hardlink" : a second name for the same file on disk (no extra space)
     mode "symlink"  : a shortcut pointing at the original
     anything else   : a full copy
+
+    Why several modes: hard links cost no space, but only work inside one drive. Copy always works.
+    Re-runs are cheap because an image that already exists at dst is skipped.
     """
     if mode == "none" or dst.exists():  # already there from an earlier run: skip, makes reruns cheap
         return
@@ -121,12 +144,22 @@ def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_sid
     Per sample the steps are: find image and XML -> parse XML -> read real image size -> check the XML
     size agrees -> for each object, check the class and box -> write the YOLO label file -> place the image.
     Anything unusable is skipped *and* logged with a reason code; nothing is dropped silently.
+
+    Inputs : split name; stems to convert; raw_cfg (folder names, extensions); yolo_root (output folder);
+             classes (ClassInfo list); image_mode (how to place images); min_side (tiny-box limit in px);
+             progress (tqdm or None); max_side (resize limit or None).
+    Outputs: issues      - list of {split, stem, severity, code, detail} rows for conversion_issues.csv
+             manifest    - one row per converted image (size and number of boxes), used later by the EDA
+             class_counts- how many boxes of each class were kept
+             stats       - counters such as converted, skipped_* and boxes_kept
+    Why    : this is the one place where raw annotation turns into training data, so every decision here
+             is logged. A reader can then explain exactly why any image or box is missing.
     """
-    raw_root = Path(raw_cfg["_abs_root"])
-    cls_idx = class_index(classes)  # {"car": 2, ...}
+    raw_root = Path(raw_cfg["_abs_root"])  # absolute raw folder, resolved once in convert_dataset
+    cls_idx = class_index(classes)  # {"car": 2, ...}; turns an XML class name into a YOLO class id
     img_out = yolo_root / "images" / split
     lbl_out = yolo_root / "labels" / split
-    lbl_out.mkdir(parents=True, exist_ok=True)
+    lbl_out.mkdir(parents=True, exist_ok=True)  # the image folder is created later by place_image
 
     issues, manifest = [], []
     class_counts: Counter = Counter()  # boxes kept, per class name
@@ -135,11 +168,12 @@ def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_sid
     # `progress` is normally tqdm, which wraps the list and draws a progress bar.
     iterator = progress(stems, desc=f"convert {split}") if progress else stems
     for stem in iterator:
-        stats["listed"] += 1
+        stats["listed"] += 1  # every sample named in the split file is counted, converted or not
         xml_path = raw_root / raw_cfg["annotation_dir"] / f"{stem}.xml"
         img_path = find_image(raw_root, raw_cfg["image_dir"], stem, raw_cfg["image_extensions"])
 
         # ---- 1. both files must exist ----
+        # A sample without its image or its XML is useless for training, so it is skipped and logged.
         if img_path is None:
             issues.append(issue(split, stem, "error", "missing_image", str(raw_root / raw_cfg["image_dir"])))
             stats["skipped_missing_image"] += 1
@@ -150,15 +184,16 @@ def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_sid
             continue
 
         # ---- 2. parse the XML; parser problems are logged but do not stop us ----
-        ann = parse_voc_xml(xml_path)
+        ann = parse_voc_xml(xml_path)  # never raises; anything odd comes back in ann.problems
         for p in ann.problems:
             issues.append(issue(split, stem, "error", "annotation_problem", p))
 
         # Image size: trust the file, flag disagreement with the xml.
         # The size read from the real JPEG is the truth; the XML's declared size can be wrong.
         try:
+            # Image.open only reads the file header here, so getting the size is fast.
             with Image.open(img_path) as im:
-                w, h = im.size
+                w, h = im.size  # real width and height in pixels (all box maths below uses these)
         except Exception as e:  # noqa: BLE001
             issues.append(issue(split, stem, "error", "corrupt_image", str(e)))
             stats["skipped_corrupt_image"] += 1
@@ -183,6 +218,7 @@ def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_sid
                 issues.append(issue(split, stem, "error", "unknown_class", obj.name))
                 stats["boxes_dropped_unknown_class"] += 1
                 continue
+            # Ask validate.box_issues what is wrong with this box: errors drop it, warnings only log it.
             found = box_issues(obj.xmin, obj.ymin, obj.xmax, obj.ymax, w, h, min_side)
             dropped = False
             for sev, code in found:
@@ -208,6 +244,7 @@ def convert_split(split, stems, raw_cfg, yolo_root, classes, image_mode, min_sid
             stats["boxes_kept"] += 1
 
         if not lines:
+            # Still written as an empty label file: in YOLO an empty file means "background image".
             issues.append(issue(split, stem, "warning", "no_valid_objects"))
             stats["images_without_objects"] += 1
 
@@ -226,6 +263,11 @@ def write_dataset_yaml(yolo_root: Path, classes: list[ClassInfo], splits_done: l
     """Write idd.yaml, the small file Ultralytics reads to find images and class names.
 
     Only splits that were actually converted are listed, so training never points at a missing folder.
+
+    Input : yolo_root (dataset folder), classes (ClassInfo list), splits_done (e.g. ["train", "val"]).
+    Output: the path of the written idd.yaml.
+    Why   : Ultralytics needs exactly this file: the dataset root, one images/<split> path per split, and
+            a {id: name} table so the trained model knows that class 7 means "autorickshaw".
     """
     data = {"path": str(yolo_root.resolve()), "names": {c.id: c.name for c in classes}}
     for s in splits_done:
@@ -236,7 +278,11 @@ def write_dataset_yaml(yolo_root: Path, classes: list[ClassInfo], splits_done: l
 
 
 def write_csv(path: Path, rows: list[dict], fields: list[str]) -> None:
-    """Write a list of dicts as a CSV file with a header row. newline="" avoids blank lines on Windows."""
+    """Write a list of dicts as a CSV file with a header row. newline="" avoids blank lines on Windows.
+
+    Input : output path, rows (each a dict), and the column names in the order they should appear.
+    Why   : CSV reports (manifest, issues) can be opened in Excel or pandas without extra tools.
+    """
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
@@ -248,6 +294,13 @@ def convert_dataset(raw_cfg, yolo_cfg, classes, repo_root: Path, splits=SPLITS, 
 
     `limit` converts only the first N samples per split, for a quick sample run before the full one.
     Returns (report dict, list of all issues).
+
+    Inputs : raw_cfg and yolo_cfg are the "raw" and "yolo" blocks of configs/dataset.yaml; classes is the
+             ClassInfo list; repo_root anchors relative paths; splits chooses which splits to convert;
+             progress is the optional tqdm wrapper.
+    Outputs: files under yolo_root (images, labels, manifest.csv, conversion_issues.csv,
+             conversion_report.json, idd.yaml) plus the returned report and issue list.
+    Why    : one entry point keeps the whole conversion reproducible from a single config file.
     """
     raw_cfg = dict(raw_cfg)  # copy so we do not modify the caller's config
     raw_root = Path(raw_cfg["root"])
@@ -259,7 +312,7 @@ def convert_dataset(raw_cfg, yolo_cfg, classes, repo_root: Path, splits=SPLITS, 
 
     all_issues, all_manifest = [], []
     report = {"raw_root": str(raw_root), "splits": {}, "classes": [c.name for c in classes]}
-    done = []
+    done = []  # splits that really got converted; only these go into idd.yaml
     for split in splits:
         stems = read_split_stems(raw_root, raw_cfg.get("split_files", {}).get(split))
         if stems is None:

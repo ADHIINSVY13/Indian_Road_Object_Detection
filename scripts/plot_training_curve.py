@@ -5,6 +5,11 @@
 The curve is what justifies calling a short run "still improving" or "plateaued", so the figure and
 the numbers printed next to it come from the same file the trainer produced -- nothing is read off
 the console log by hand.
+
+Reading the curve (for explaining it): mAP is the accuracy score on the validation images after
+each epoch (one epoch = one pass over all training images). A rising line means the model is still
+learning; a flat line means more epochs would add little. Training loss is the error on the training
+images; a falling loss with a rising mAP means the model is genuinely improving, not just memorising.
 """
 from __future__ import annotations
 
@@ -35,7 +40,13 @@ def parse_args():
 
 
 def read_curve(path: Path) -> list[dict]:
-    """Read results.csv into a list of row dicts (one per epoch)."""
+    """Read results.csv into a list of row dicts (one per epoch).
+
+    Input : path of the CSV the Ultralytics trainer writes after every epoch.
+    Output: [{"epoch": "1", "metrics/mAP50(B)": "0.21", ...}, ...]; values are still text here and
+            are converted to numbers in main().
+    Why this exists: using the trainer's own file means the plot and the report share one source.
+    """
     with open(path, newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))  # DictReader maps each row to {column name: text value}
     # Ultralytics pads some column names with spaces, so strip every key once here.
@@ -44,6 +55,7 @@ def read_curve(path: Path) -> list[dict]:
 
 
 def main():
+    """Read the training log, draw the two-panel curve, and print the numbers quoted in the report."""
     args = parse_args()
     path = resolve(args.csv)
     if not path.exists():
@@ -78,6 +90,8 @@ def main():
     ax1.grid(alpha=0.3)
     ax1.legend(fontsize=8)
 
+    # Right panel: the two training losses. box_loss = how well boxes fit the objects (position and
+    # size); cls_loss = how often the class is wrong. Both should go down as training progresses.
     ax2.plot(ep, box, marker="o", ms=3, label="box_loss")
     ax2.plot(ep, cls, marker="o", ms=3, label="cls_loss")
     ax2.set_xlabel("epoch")
@@ -86,7 +100,7 @@ def main():
     ax2.grid(alpha=0.3)
     ax2.legend(fontsize=8)
 
-    fig.tight_layout()
+    fig.tight_layout()  # avoid overlapping titles and labels between the two panels
     out = resolve(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=150)

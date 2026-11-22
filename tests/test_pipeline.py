@@ -9,8 +9,8 @@ touch the real data and never leave files behind.
 import sys
 from pathlib import Path
 
-import pytest
-from PIL import Image
+import pytest          # the test framework: finds test_* functions, provides fixtures such as tmp_path
+from PIL import Image  # used to create tiny blank images for the fake dataset
 
 # Make `src` and `scripts` importable no matter where pytest is started from.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -45,19 +45,26 @@ def make_sample(root, stem, w, h, boxes, xml_size=None):
 def dataset(tmp_path):
     """A fixture is shared setup code: pytest builds this small dataset fresh for each test that asks
     for `dataset`. It deliberately contains one example of each problem the pipeline must handle."""
+    # tmp_path is a fresh empty folder that pytest provides and deletes afterwards.
     raw = tmp_path / "raw"
+    # Sample a: two clean boxes (car, autorickshaw).
     make_sample(raw, "seq1/a", 200, 100, [("car", 10, 10, 60, 50), ("autorickshaw", 100, 20, 150, 90)])
     make_sample(raw, "seq1/b", 200, 100, [("Person", -5, 0, 40, 60),       # clipped
                                           ("car", 50, 50, 50, 80),          # zero width -> dropped
                                           ("dragon", 1, 1, 20, 20)])       # unknown class -> dropped
+    # Sample c: one clean animal box. Sample d: its XML claims 400x100 but the image is 200x100, so the
+    # aspect ratio disagrees and the converter must skip the whole image.
     make_sample(raw, "seq2/c", 200, 100, [("animal", 0, 0, 100, 100)])
     make_sample(raw, "seq2/d", 200, 100, [("bus", 5, 5, 90, 60)], xml_size=(400, 100))  # aspect mismatch -> skipped
     # Split lists: note "seq2/missing" has no files at all, to test the missing-image path.
     (raw / "train.txt").write_text("seq1/a\nseq1/b\nseq2/c\nseq2/missing\n")
     (raw / "val.txt").write_text("seq2/d\n")
+    # Configs shaped like the "raw" and "yolo" sections of configs/dataset.yaml, but pointing at the
+    # temporary folder, so the test uses exactly the production code path.
     raw_cfg = {"root": str(raw), "image_dir": "JPEGImages", "annotation_dir": "Annotations",
                "image_extensions": [".jpg"], "split_files": {"train": "train.txt", "val": "val.txt", "test": "test.txt"}}
     yolo_cfg = {"root": str(tmp_path / "yolo"), "image_mode": "copy", "min_box_side_px": 2}
+    # The real 15-class list (we test the converter against the project's actual class names).
     classes = load_classes(resolve("configs/class_mapping.yaml"))
     return raw, raw_cfg, yolo_cfg, classes, tmp_path
 
@@ -90,16 +97,21 @@ def test_convert_validate_eda(dataset):
     """Full pipeline on the fake data: convert, check every expected issue appears, validate the
     output, then run the EDA and confirm it produces its figures."""
     raw, raw_cfg, yolo_cfg, classes, tmp = dataset
+    # Convert the fake dataset. Path(".") is the repo root used only to resolve relative paths.
     report, issues = convert_dataset(raw_cfg, yolo_cfg, classes, Path("."))
+    # Set of every issue code the converter logged; the next assert checks each expected one is present.
     codes = {i["code"] for i in issues}
     # <= on sets means "is a subset of": all of these problems must have been detected and logged.
     assert {"missing_image", "unknown_class", "non_positive_size", "out_of_bounds_clipped",
             "aspect_mismatch_skipped"} <= codes
+    # Train list has 4 stems: a, b, c convert fine; "missing" has no files. Kept boxes: a=2, b=1
+    # (the person; zero-width car and unknown "dragon" dropped), c=1 -> 4 in total.
     train = report["splits"]["train"]
     assert train["converted"] == 3 and train["boxes_kept"] == 4
     assert report["splits"]["val"]["skipped_aspect_mismatch"] == 1
     assert "test" in report["splits"] and "not converted" in report["splits"]["test"]["status"]
 
+    # The converter must have written the dataset YAML and the per-image manifest.
     yolo = Path(yolo_cfg["root"])
     assert (yolo / "idd.yaml").exists() and (yolo / "manifest.csv").exists()
     # The clipped person box spans x 0..40 of a 200 px wide image -> centre at 20/200 = 0.1.
@@ -110,6 +122,7 @@ def test_convert_validate_eda(dataset):
     post = validate_yolo_dataset(yolo, len(classes), check_images=True)
     assert all(i["severity"] == "warning" for i in post)
 
+    # Finally run the EDA on the converted data and check it counted the 4 kept train boxes and drew a figure.
     stats = run_eda(yolo, [c.name for c in classes], {c.name: c.group for c in classes}, tmp / "eda", "synthetic")
     assert stats["boxes_per_split"]["train"] == 4
     assert (tmp / "eda" / "class_distribution.png").exists()
@@ -151,8 +164,10 @@ def test_resize_disabled_when_zero(dataset):
 
 def test_train_summary_helpers(tmp_path):
     """The per-group AP aggregation is the project's central comparison, so pin it down."""
+    # Imported inside the test so a failure in these scripts affects only this test.
     from scripts.train_yolo import mean_ap_per_group, split_counts
 
+    # common = mean(0.4, 0.2) = 0.3; india_specific has the single value 0.1.
     per_class = {"person": 0.4, "car": 0.2, "autorickshaw": 0.1}
     groups = {"person": "common", "car": "common", "autorickshaw": "india_specific"}
     assert mean_ap_per_group(per_class, groups) == {"common": 0.3, "india_specific": 0.1}
