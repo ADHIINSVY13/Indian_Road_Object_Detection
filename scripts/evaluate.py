@@ -92,6 +92,18 @@ def build_eval_dir(yolo_root: Path, split: str, id_map: dict[int, int], out_dir:
     return stems, kept, dropped, empty
 
 
+def ap_by_class_id(ap_class_index, maps) -> dict[int, float]:
+    """AP50-95 per class id that has ground truth.
+
+    Ultralytics' `box.maps` has one slot per class in the label space, indexed by class id, and
+    classes with no ground truth hold the overall mAP. `ap_class_index` lists only the classes
+    that do have ground truth. Pairing them by position (`zip`) shifts every value whenever a
+    class id is absent, which is the normal case for the 80-class COCO baseline, so look each
+    class up by its id.
+    """
+    return {int(c): float(maps[int(c)]) for c in ap_class_index}
+
+
 def group_means(per_class: dict[str, float], groups: dict[str, str]) -> dict[str, float]:
     buckets: dict[str, list[float]] = {}
     for name, ap in per_class.items():
@@ -152,15 +164,13 @@ def main():
     metrics = model.val(data=str(data_yaml), split=args.split, imgsz=args.imgsz, batch=args.batch,
                         device=args.device, conf=args.conf, iou=args.iou, plots=False, verbose=False)
 
-    box = metrics.box
-    idx = [int(i) for i in box.ap_class_index]
-    aps = [float(v) for v in box.maps]
+    ap_by_id = ap_by_class_id(metrics.box.ap_class_index, metrics.box.maps)
 
     if args.coco_baseline:
         back = {c.coco_ids[0]: c.name for c in direct}
-        per_class = {back[i]: round(a, 4) for i, a in zip(idx, aps) if i in back}
+        per_class = {back[i]: round(a, 4) for i, a in ap_by_id.items() if i in back}
     else:
-        per_class = {eval_names[i]: round(a, 4) for i, a in zip(idx, aps) if i < len(eval_names)}
+        per_class = {eval_names[i]: round(a, 4) for i, a in ap_by_id.items() if i < len(eval_names)}
 
     summary = {
         "tag": args.tag,

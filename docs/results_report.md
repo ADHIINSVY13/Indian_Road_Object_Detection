@@ -11,11 +11,19 @@ Every number here was produced by an executed run. The commands are at the botto
 
 | Question | Answer |
 |---|---|
-| Does IDD fine-tuning help at all? | **Yes.** On the 7 comparable classes the mean AP50-95 went **0.148 → 0.300**, a **+103% relative** gain. |
-| Where is the gain largest? | **bus (+0.33)**, **truck (+0.39)**, **motorcycle (+0.17)**, **person (+0.13)**. A COCO model scores **0.00** on IDD `truck`; after fine-tuning it reaches **0.39**. |
+| Does IDD fine-tuning help at all? | **Yes.** On the 7 comparable classes with enough val boxes the mean AP50-95 went **0.177 → 0.300** (+0.123, **+70% relative**). |
+| Where is the gain largest? | **truck (+0.24)**, **motorcycle (+0.17)**, **bus (+0.14)**, **person (+0.13)**. `truck` went 0.155 → 0.392, the largest jump in absolute terms. |
 | Do India-specific classes benefit more? | **They cannot be compared, and that is the finding.** A COCO detector has no output class for `autorickshaw`, `vehicle fallback`, `caravan` or `trailer`, so it is scored **N/A**, never 0. After fine-tuning `autorickshaw` reaches **0.439** — the second-best class in the whole model, above `car`. |
 | How much of the dataset is the baseline blind to? | **35.0% of val boxes** (44,154 of 126,059) belong to classes a COCO model cannot name. |
-| Any regressions? | Two: `traffic light` (0.155 → 0.059) and `train` (0.346 → 0.000). Both are discussed in §6. |
+| Any regressions? | **None on the 7 supported classes.** `train` is 0.000 → 0.000, but it has only 13 val boxes, so it is noise (§6). |
+
+> **Correction (2026-11-22).** An earlier version of this report, and of `results/eval_coco_baseline.json`,
+> carried wrong baseline AP for `bus`, `train`, `truck` and `traffic light`: per-class AP was paired with
+> class ids by list position instead of by id, which shifts values whenever a class has no ground truth
+> (the normal case for the 80-class COCO model). It reported "truck 0.00 → 0.39" and two regressions that
+> do not exist. The code is fixed (`ap_by_class_id` in `scripts/evaluate.py`, with a regression test), the
+> baseline was re-run, and every number below comes from that re-run. The fine-tuned numbers were never
+> affected.
 
 ---
 
@@ -95,14 +103,14 @@ the 10,225 val images — it is what decides whether an AP is informative.
 
 | Class | Group | Val boxes | Baseline | Fine-tuned | Δ |
 |---|---|---:|---:|---:|---:|
-| bus | common | 4,916 | 0.1546 | **0.4866** | **+0.3320** |
+| bus | common | 4,916 | 0.3456 | **0.4866** | +0.1410 |
 | car | common | 24,843 | 0.3505 | **0.4261** | +0.0756 |
-| truck | common | 7,078 | 0.0000 | **0.3923** | **+0.3923** |
+| truck | common | 7,078 | 0.1553 | **0.3923** | **+0.2370** |
 | motorcycle | common | 25,489 | 0.1866 | **0.3530** | +0.1664 |
 | person | common | 18,078 | 0.1048 | **0.2305** | +0.1257 |
 | bicycle | common | 569 | 0.0836 | **0.1531** | +0.0695 |
-| traffic light | common | 919 | 0.1553 | 0.0588 | **−0.0965** |
-| train | common | 13 | 0.3456 | 0.0000 | **−0.3456** |
+| traffic light | common | 919 | 0.0104 | 0.0588 | +0.0484 |
+| train | common | 13 | 0.0000 | 0.0000 | 0.0000 |
 | rider | ambiguous | 24,518 | N/A | **0.2764** | — |
 | traffic sign | ambiguous | 4,287 | N/A | 0.1075 | — |
 | animal | ambiguous | 1,460 | N/A | 0.0836 | — |
@@ -113,11 +121,11 @@ the 10,225 val images — it is what decides whether an AP is informative.
 
 `N/A` = the baseline has no output class for it. It is **not** a zero.
 
-**6 of the 8 comparable classes improved**, mean **+0.194** over those 6, and **+0.090** over all 8
-(the two regressions below pull the second number down).
+**7 of the 8 comparable classes improved** and none got worse; the 8th, `train`, is 0.000 → 0.000 on 13 val
+boxes (§6). The mean change is **+0.123** over the 7 supported classes and **+0.108** over all 8.
 
 `autorickshaw` at **0.4389** is worth pausing on: it is a class COCO has never seen, it is 7,782 val
-boxes (the 5th most common class in the split), and it beats `car` (0.4261) and `truck` (0.3923).
+boxes (the 5th most common class in the split), and it beats `car` (0.4261) and `truck` (0.3923). Only `bus` (0.4866) scores higher.
 Fine-tuning did not merely transfer; it learned a genuinely new, frequently-occurring object.
 
 ---
@@ -126,7 +134,7 @@ Fine-tuning did not merely transfer; it learned a genuinely new, frequently-occu
 
 | Group | Classes scoreable by baseline | Baseline | Fine-tuned (all) | Fine-tuned (supported only) |
 |---|---:|---:|---:|---:|
-| common | 8 / 8 | 0.1726 | 0.2626 | **0.3001** |
+| common | 8 / 8 | 0.1546 | 0.2626 | **0.3001** |
 | ambiguous | **0 / 3** | N/A | 0.1558 | 0.1558 |
 | india_specific | **0 / 4** | N/A | 0.1172 | **0.2345** |
 
@@ -136,15 +144,15 @@ becomes:
 
 | | Baseline | Fine-tuned | Change |
 |---|---:|---:|---:|
-| common (7 classes) | 0.1479 | 0.3001 | **+0.1522 (+103%)** |
+| common (7 classes) | 0.1767 | 0.3001 | **+0.1234 (+70%)** |
 | india_specific (2 classes) | N/A | 0.2345 | not computable |
 | ambiguous (3 classes) | N/A | 0.1558 | not computable |
 
 **How to read this.** The project's hypothesis was "fine-tuning helps India-specific classes more". The
 data supports a sharper version of it:
 
-1. For **common** classes the baseline already works, and fine-tuning **doubles** the score. This is
-   ordinary domain adaptation.
+1. For **common** classes the baseline already works, and fine-tuning raises the mean AP by about **70%**
+   (0.177 → 0.300). This is ordinary domain adaptation.
 2. For **India-specific** classes there is no "before" number, because the baseline's head has no slot to
    put them in. The improvement is therefore not a percentage — it goes from **structurally impossible**
    to **0.44 on autorickshaw**. That is a categorically different kind of gain.
@@ -154,19 +162,22 @@ data supports a sharper version of it:
 
 ---
 
-## 6. The two regressions
+## 6. Two rows to read with care
 
-### `traffic light`: 0.1553 → 0.0588
+No supported class regressed, but two rows should not be over-read.
 
-Real, and not noise (919 val boxes). Two plausible causes, neither proven here:
-the IDD `traffic light` boxes are small and often partially occluded, and the 15-class head now spends
-capacity on classes that occur 10–80× more often. Recall on this class is the thing to inspect next.
+### `traffic light`: 0.0104 → 0.0588
 
-### `train`: 0.3456 → 0.0000
+Improved, yet both numbers are low. Fine-tuning raised it about 5.7×, but 0.059 is still the weakest of
+the classes with real support (919 val boxes). Likely reasons, neither proven here: IDD `traffic light`
+boxes are small and often partially occluded, and the 15-class head spends capacity on classes that occur
+10–80× more often. Recall on this class is the thing to inspect next.
 
-Almost certainly noise. `train` has **13 val boxes and 47 training boxes** in the entire dataset. The
-baseline scores 0.35 on 13 boxes, the fine-tuned model scores 0.00 — both numbers are essentially a coin
-flip. Nothing should be concluded from this row; it is reported because hiding a zero would be worse.
+### `train`: 0.0000 → 0.0000
+
+Noise. `train` has **13 val boxes and 47 training boxes** in the entire dataset, so neither model gives a
+usable measurement. Nothing should be concluded from this row; it is reported because hiding a zero would
+be worse.
 
 ---
 
@@ -191,9 +202,10 @@ of confidence-threshold tuning fixes that; it is a property of the label space. 
 
 1. **23 of 30 epochs.** The run was cut short by the Colab free-GPU quota. The curve was flattening
    (see §3), so the expected gain from the missing epochs is ≈ +0.003 mAP50-95.
-2. **A single seed.** No run-to-run variance was measured, so treat the three smallest deltas
-   (`car +0.076`, `bicycle +0.070`, `traffic light −0.097`) as indicative rather than established, and
-   the large ones (`truck +0.392`, `bus +0.332`, `autorickshaw` appearing from nothing) as robust.
+2. **A single seed.** No run-to-run variance was measured, so treat the smallest deltas
+   (`traffic light +0.048`, `bicycle +0.070`, `car +0.076`) as indicative rather than established, and
+   the large ones (`truck +0.237`, `motorcycle +0.166`, `bus +0.141`, `autorickshaw` appearing from
+   nothing) as more likely to hold.
 3. **`yolo11n` only.** This is the smallest model in the family. A larger backbone would raise every
    number, so the absolute values are not a claim about what YOLO can do in general.
 4. **Nano model, CPU evaluation.** Inference ran on CPU with fp32; GPU fp16 would give slightly different
@@ -205,6 +217,9 @@ of confidence-threshold tuning fixes that; it is a property of the label space. 
    makes it inherently hard; the low AP says something about the taxonomy, not only about the model.
 7. **One dataset, one split.** Everything is IDD's own val split. No cross-dataset transfer was tested, so
    "fine-tuning generalises to other Indian roads" is not supported by this experiment.
+8. **Checkpoint chosen on the same split it is scored on.** `best.pt` is the best epoch by val mAP and is then
+   evaluated on val, because the public release has no test labels. The reported fine-tuned numbers are
+   therefore slightly optimistic. Here the best epoch is also the last one, which limits the effect.
 
 ---
 

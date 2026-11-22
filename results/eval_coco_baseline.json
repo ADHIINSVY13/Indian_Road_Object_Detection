@@ -1,6 +1,6 @@
 {
   "tag": "coco_baseline",
-  "model": "yolo11n.pt",
+  "model": "C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/yolo11n.pt",
   "mode": "coco_baseline",
   "split": "val",
   "images": 10225,
@@ -19,13 +19,13 @@
   },
   "per_class_ap50_95": {
     "car": 0.3505,
-    "train": 0.3456,
+    "bus": 0.3456,
     "motorcycle": 0.1866,
-    "traffic light": 0.1553,
-    "bus": 0.1546,
+    "truck": 0.1553,
     "person": 0.1048,
     "bicycle": 0.0836,
-    "truck": 0.0
+    "traffic light": 0.0104,
+    "train": 0.0
   },
   "not_evaluable": {
     "rider": "COCO has no rider class; a rider is detected as person. Do not treat as a direct match.",
@@ -37,8 +37,8 @@
     "trailer": "no COCO equivalent"
   },
   "per_group_ap50_95": {
-    "common": 0.1726
+    "common": 0.1546
   },
-  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\runs\\detect\\val5",
-  "command": "scripts\\evaluate.py --model yolo11n.pt --tag coco_baseline --coco-baseline --batch 32"
+  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\runs\\detect\\val6",
+  "command": "scripts/evaluate.py --config C:/Users/ASUS/AppData/Local/Temp/dataset_abs.yaml --model C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/yolo11n.pt --tag coco_baseline --coco-baseline --batch 32 --work-dir C:/p07eval"
 }

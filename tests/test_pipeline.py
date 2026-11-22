@@ -168,3 +168,13 @@ def test_group_means_averages_only_scored_classes():
     assert group_means({"person": 0.4, "car": 0.2}, groups) == {"common": 0.3}
     assert group_means({}, groups) == {}
 
+
+
+def test_ap_by_class_id_survives_absent_classes():
+    """Regression: with absent class ids, `maps` is id-indexed but `ap_class_index` is compact.
+    Pairing them by position gave bus the overall mAP and shifted every later class."""
+    from scripts.evaluate import ap_by_class_id
+
+    # 10-slot label space; only ids 0, 1, 5, 7 have ground truth. Absent ids hold the overall mean 0.5.
+    maps = [0.1, 0.2, 0.5, 0.5, 0.5, 0.6, 0.5, 0.7, 0.5, 0.5]
+    assert ap_by_class_id([0, 1, 5, 7], maps) == {0: 0.1, 1: 0.2, 5: 0.6, 7: 0.7}

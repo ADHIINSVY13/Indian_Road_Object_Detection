@@ -1,7 +1,7 @@
 {
   "baseline": {
     "tag": "coco_baseline",
-    "model": "yolo11n.pt",
+    "model": "C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/yolo11n.pt",
     "images": 10225,
     "overall": {
       "metrics/precision(B)": 0.3875,
@@ -27,9 +27,9 @@
     {
       "class": "bus",
       "group": "common",
-      "baseline_ap50_95": 0.1546,
+      "baseline_ap50_95": 0.3456,
       "finetuned_ap50_95": 0.4866,
-      "delta": 0.332,
+      "delta": 0.141,
       "baseline_status": "scored"
     },
     {
@@ -43,9 +43,9 @@
     {
       "class": "truck",
       "group": "common",
-      "baseline_ap50_95": 0.0,
+      "baseline_ap50_95": 0.1553,
       "finetuned_ap50_95": 0.3923,
-      "delta": 0.3923,
+      "delta": 0.237,
       "baseline_status": "scored"
     },
     {
@@ -75,17 +75,17 @@
     {
       "class": "traffic light",
       "group": "common",
-      "baseline_ap50_95": 0.1553,
+      "baseline_ap50_95": 0.0104,
       "finetuned_ap50_95": 0.0588,
-      "delta": -0.0965,
+      "delta": 0.0484,
       "baseline_status": "scored"
     },
     {
       "class": "train",
       "group": "common",
-      "baseline_ap50_95": 0.3456,
+      "baseline_ap50_95": 0.0,
       "finetuned_ap50_95": 0.0,
-      "delta": -0.3456,
+      "delta": 0.0,
       "baseline_status": "scored"
     },
     {
@@ -158,9 +158,9 @@
         "train"
       ],
       "scored_by_baseline": 8,
-      "baseline_ap50_95": 0.1726,
+      "baseline_ap50_95": 0.1546,
       "finetuned_ap50_95": 0.2626,
-      "delta": 0.0899
+      "delta": 0.108
     },
     "ambiguous": {
       "classes": [
