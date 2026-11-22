@@ -13,8 +13,8 @@ the weights differ.
 | Name | GitHub |
 |---|---|
 | **Aryan Saini** | [aryan2006-saini](https://github.com/aryan2006-saini) |
-| Divyanshi Sahu | |
-| Gaurav Rathore | |
+| Divyanshi Sahu | [ADHIINSVY13](https://github.com/ADHIINSVY13) |
+| Gaurav Rathore | [Flashrandom](https://github.com/Flashrandom) |
 
 The submission report, [report/P07_Report_ELCVIA.pdf](report/P07_Report_ELCVIA.pdf), is authored by
 Aryan Saini, Divyanshi Sahu and Gaurav Rathore.
