@@ -128,8 +128,10 @@ def main():
     per_class = {}
     box = getattr(metrics, "box", None)
     if box is not None and getattr(box, "maps", None) is not None:
+        # box.maps is indexed by class id (classes without ground truth hold the overall mAP), so
+        # look each class up by id rather than zipping it against ap_class_index.
         idx = list(getattr(box, "ap_class_index", range(len(box.maps))))
-        per_class = {classes[i].name: round(float(m), 4) for i, m in zip(idx, box.maps)}
+        per_class = {classes[int(i)].name: round(float(box.maps[int(i)]), 4) for i in idx}
 
     summary = {
         "model": args.model,

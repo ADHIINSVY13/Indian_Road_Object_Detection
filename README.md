@@ -59,6 +59,18 @@ excluded on purpose; `india_specific` classes are reported as N/A, never as 0.
 Each run writes `results/eval_<tag>.json` in the same shape, and `compare_evals.py` folds them into
 `results/comparison.json` plus `results/results_compare.png`. Full write-up: [docs/results_report.md](docs/results_report.md).
 
+## Qualitative comparison and environment
+```bash
+python scripts/qualitative.py --finetuned models/best.pt --baseline yolo11n.pt   # results/qualitative/
+python scripts/record_environment.py --tag local                                # results/environment_local.json
+```
+Side-by-side pictures (ground truth | COCO baseline | fine-tuned) from a seeded random sample, plus the
+lowest-recall failure cases. Per-class precision and recall are in `results/eval_*.json` (`per_class_detail`).
+
+## Reading the code
+[docs/CODE_WALKTHROUGH.md](docs/CODE_WALKTHROUGH.md) explains every script and module, the design decisions
+behind them, and likely questions about the code.
+
 ## Repository layout
 `configs/` configuration, `src/` library code, `scripts/` command-line entry points, `notebooks/` analysis,
 `results/` generated outputs, `docs/` and `report/` write-ups. The dataset and model weights are never committed.

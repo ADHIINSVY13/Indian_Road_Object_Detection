@@ -178,3 +178,35 @@ def test_ap_by_class_id_survives_absent_classes():
     # 10-slot label space; only ids 0, 1, 5, 7 have ground truth. Absent ids hold the overall mean 0.5.
     maps = [0.1, 0.2, 0.5, 0.5, 0.5, 0.6, 0.5, 0.7, 0.5, 0.5]
     assert ap_by_class_id([0, 1, 5, 7], maps) == {0: 0.1, 1: 0.2, 5: 0.6, 7: 0.7}
+
+
+def test_compact_by_class_id_pairs_by_position():
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+    from evaluate import compact_by_class_id
+
+    # p/r/ap50 are stored only for classes with ground truth, in ap_class_index order
+    assert compact_by_class_id([0, 1, 5, 7], [0.9, 0.8, 0.7, 0.6]) == {0: 0.9, 1: 0.8, 5: 0.7, 7: 0.6}
+
+
+def test_iou_and_recall_matching():
+    from src.visualization.qualitative import iou, recall_at_iou
+
+    assert iou((0, 0, 10, 10), (0, 0, 10, 10)) == 1.0
+    assert iou((0, 0, 10, 10), (20, 20, 30, 30)) == 0.0
+    assert abs(iou((0, 0, 10, 10), (5, 0, 15, 10)) - 1 / 3) < 1e-9
+
+    gt = [(1, (0, 0, 10, 10)), (1, (50, 50, 60, 60))]
+    assert recall_at_iou(gt, [(1, (0, 0, 10, 10))]) == 0.5       # one of two found
+    assert recall_at_iou(gt, [(2, (0, 0, 10, 10))]) == 0.0       # right place, wrong class
+    # one big box cannot "find" two ground-truth boxes
+    assert recall_at_iou([(1, (0, 0, 10, 10)), (1, (0, 0, 10, 10))], [(1, (0, 0, 10, 10))]) == 0.5
+    assert recall_at_iou([], [(1, (0, 0, 1, 1))]) == 1.0
+
+
+def test_read_yolo_labels(tmp_path):
+    from src.visualization.qualitative import read_yolo_labels
+
+    f = tmp_path / "a.txt"
+    f.write_text("3 0.5 0.5 0.2 0.4\n")
+    (cid, box), = read_yolo_labels(f, 100, 100)
+    assert cid == 3 and [round(v, 6) for v in box] == [40.0, 30.0, 60.0, 70.0]

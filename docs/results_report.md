@@ -198,7 +198,89 @@ of confidence-threshold tuning fixes that; it is a property of the label space. 
 
 ---
 
-## 8. Limitations — read before quoting a number
+## 8. Precision and recall per class
+
+AP summarises the whole precision-recall curve. Precision and recall below are the values Ultralytics
+reports at the confidence that maximises F1 for each class (`box.p` / `box.r`), so they describe one
+operating point, not the full curve. Format is `precision / recall`.
+
+| Class | Baseline P / R | Fine-tuned P / R | Fine-tuned AP50 |
+|---|---:|---:|---:|
+| bus | 0.563 / 0.406 | 0.759 / 0.574 | 0.637 |
+| car | 0.656 / 0.458 | 0.748 / 0.545 | 0.611 |
+| truck | 0.321 / 0.262 | 0.685 / 0.484 | 0.544 |
+| motorcycle | 0.775 / 0.258 | 0.732 / 0.544 | 0.595 |
+| person | 0.321 / 0.294 | 0.691 / 0.359 | 0.423 |
+| bicycle | 0.348 / 0.165 | 0.503 / 0.238 | 0.257 |
+| traffic light | 0.117 / 0.050 | 0.596 / 0.080 | 0.119 |
+| train | 0.000 / 0.000 | 1.000 / 0.000 | 0.000 |
+| rider | N/A | 0.735 / 0.424 | 0.490 |
+| traffic sign | N/A | 0.521 / 0.197 | 0.211 |
+| animal | N/A | 0.487 / 0.149 | 0.170 |
+| autorickshaw | N/A | 0.726 / 0.558 | 0.617 |
+| vehicle fallback | N/A | 0.487 / 0.042 | 0.057 |
+| caravan | N/A | 1.000 / 0.000 | 0.000 |
+| trailer | N/A | 0.000 / 0.000 | 0.000 |
+
+Reading it: the fine-tuned model's recall is much lower than its precision for most classes (overall
+precision 0.645, recall 0.280): when it fires it is usually right, but it misses many objects. The lowest recalls are
+`traffic light` (0.080), `vehicle fallback` (0.042) and `animal` (0.149), plus the near-empty `caravan`, `trailer`
+and `train`; `traffic light` is a small-object class (see `docs/dataset_report.md`), while `vehicle fallback` is a
+catch-all label, so these low recalls have different likely causes. `precision = 1.000` with
+`recall = 0.000` for `caravan` and `train` is an artefact, not a good score: at the F1-optimal threshold the
+model makes no (or almost no) detections for them, so there is nothing to be wrong about. `trailer` (0.000 / 0.000)
+and the baseline's `train` row likewise show no usable detections; with 7-13 val boxes none of these is informative.
+
+Source: `per_class_detail` in `results/eval_finetuned.json` and `results/eval_coco_baseline.json`.
+
+---
+
+## 9. Qualitative comparison
+
+`scripts/qualitative.py` draws ground truth, the COCO baseline and the fine-tuned model side by side on the
+same image (display confidence 0.25). Two galleries are in `results/qualitative/`, with every image listed in
+`results/qualitative/index.json`.
+
+**Random sample** (`random_00..07.jpg`): 8 val images drawn with seed 0, nothing hand-picked.
+
+| Image | GT boxes | Baseline detections | Fine-tuned detections | Fine-tuned recall@IoU0.5 | Median GT box area |
+|---|---:|---:|---:|---:|---:|
+| `random_00.jpg` | 7 | 5 | 6 | 0.71 | 0.250% |
+| `random_01.jpg` | 3 | 0 | 0 | 0.00 | 0.016% |
+| `random_02.jpg` | 1 | 1 | 1 | 1.00 | 0.428% |
+| `random_03.jpg` | 18 | 7 | 7 | 0.28 | 0.049% |
+| `random_04.jpg` | 8 | 11 | 10 | 1.00 | 2.632% |
+| `random_05.jpg` | 4 | 2 | 7 | 0.75 | 3.333% |
+| `random_06.jpg` | 1 | 1 | 2 | 1.00 | 80.863% |
+| `random_07.jpg` | 27 | 14 | 19 | 0.63 | 0.127% |
+
+**Failure cases** (`failure_00..07.jpg`): the 8 images with the lowest fine-tuned recall@IoU0.5 among
+253 pool images with >= 5 GT boxes, drawn from a seeded pool of 400 val images.
+
+| Image | GT boxes | Baseline detections | Fine-tuned detections | Fine-tuned recall@IoU0.5 | Median GT box area |
+|---|---:|---:|---:|---:|---:|
+| `failure_00.jpg` | 16 | 0 | 0 | 0.00 | 0.008% |
+| `failure_01.jpg` | 11 | 0 | 1 | 0.00 | 0.026% |
+| `failure_02.jpg` | 6 | 0 | 0 | 0.00 | 0.019% |
+| `failure_03.jpg` | 6 | 2 | 0 | 0.00 | 0.016% |
+| `failure_04.jpg` | 6 | 2 | 2 | 0.00 | 0.301% |
+| `failure_05.jpg` | 5 | 0 | 0 | 0.00 | 0.005% |
+| `failure_06.jpg` | 17 | 0 | 3 | 0.06 | 0.006% |
+| `failure_07.jpg` | 11 | 1 | 1 | 0.09 | 0.005% |
+
+What the numbers say (measured, not interpreted): 7 of the 8 failure images have a median
+ground-truth box smaller than 0.1% of the image area, against 2 of the 8 random images. The failures are
+dominated by images full of tiny, distant objects, consistent with the small-object and `traffic light` findings in
+§6 and `docs/dataset_report.md`. Whether the cause is object size, occlusion, lighting or label noise is
+**not tested here**; the stored statistics only show that size is strongly associated with failure in this
+sample. Both galleries are small samples and illustrate the quantitative tables; they do not replace them.
+
+The baseline panel uses its own 80 COCO names. Where it fires on an Indian-specific object it gives a COCO
+label (an autorickshaw in `random_03.jpg` is boxed as `truck`), which is the vocabulary gap from §7 made visible.
+
+---
+
+## 10. Limitations — read before quoting a number
 
 1. **23 of 30 epochs.** The run was cut short by the Colab free-GPU quota. The curve was flattening
    (see §3), so the expected gain from the missing epochs is ≈ +0.003 mAP50-95.
@@ -223,7 +305,7 @@ of confidence-threshold tuning fixes that; it is a property of the label space. 
 
 ---
 
-## 9. Reproducing every number
+## 11. Reproducing every number
 
 ```bash
 # 1. the training run (needs a GPU; produced models/best.pt and results/results.csv)
@@ -239,9 +321,12 @@ python scripts/evaluate.py --model yolo11n.pt --tag coco_baseline --coco-baselin
 
 # 4. the comparison table and figure
 python scripts/compare_evals.py
+
+# 5. the qualitative galleries (CPU)
+python scripts/qualitative.py --finetuned models/best.pt --baseline yolo11n.pt
 ```
 
-## 10. Files this report is built from
+## 12. Files this report is built from
 
 | File | Contents |
 |---|---|
@@ -251,4 +336,5 @@ python scripts/compare_evals.py
 | `results/comparison.json` | per-class Δ and per-group means |
 | `results/training_curve.png` | §3 figure |
 | `results/results_compare.png` | §4 figure |
+| `results/qualitative/` | §9 galleries and `index.json` (seed, thresholds, per-image stats) |
 | `docs/dataset_report.md` | the dataset side: counts, imbalance, small-object analysis |

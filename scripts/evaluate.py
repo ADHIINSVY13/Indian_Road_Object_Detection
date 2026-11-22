@@ -104,6 +104,13 @@ def ap_by_class_id(ap_class_index, maps) -> dict[int, float]:
     return {int(c): float(maps[int(c)]) for c in ap_class_index}
 
 
+def compact_by_class_id(ap_class_index, values) -> dict[int, float]:
+    """Per-class values that Ultralytics stores *compactly*: `box.p`, `box.r` and `box.ap50` have one
+    entry per class that has ground truth, in the order of `ap_class_index` (unlike `box.maps`,
+    which is indexed by class id)."""
+    return {int(c): float(v) for c, v in zip(ap_class_index, values)}
+
+
 def group_means(per_class: dict[str, float], groups: dict[str, str]) -> dict[str, float]:
     buckets: dict[str, list[float]] = {}
     for name, ap in per_class.items():
@@ -166,11 +173,23 @@ def main():
 
     ap_by_id = ap_by_class_id(metrics.box.ap_class_index, metrics.box.maps)
 
+    box = metrics.box
+    p_by_id = compact_by_class_id(box.ap_class_index, box.p)
+    r_by_id = compact_by_class_id(box.ap_class_index, box.r)
+    ap50_by_id = compact_by_class_id(box.ap_class_index, box.ap50)
+
     if args.coco_baseline:
         back = {c.coco_ids[0]: c.name for c in direct}
-        per_class = {back[i]: round(a, 4) for i, a in ap_by_id.items() if i in back}
+        name_of = lambda i: back.get(i)  # noqa: E731 - only the direct-match COCO ids are reported
     else:
-        per_class = {eval_names[i]: round(a, 4) for i, a in ap_by_id.items() if i < len(eval_names)}
+        name_of = lambda i: eval_names[i] if i < len(eval_names) else None  # noqa: E731
+
+    per_class = {name_of(i): round(a, 4) for i, a in ap_by_id.items() if name_of(i)}
+    per_class_detail = {
+        name_of(i): {"precision": round(p_by_id[i], 4), "recall": round(r_by_id[i], 4),
+                     "ap50": round(ap50_by_id[i], 4), "ap50_95": round(ap_by_id[i], 4)}
+        for i in ap_by_id if name_of(i)
+    }
 
     summary = {
         "tag": args.tag,
@@ -186,6 +205,7 @@ def main():
         "images_left_empty": empty,
         "overall": {k: round(float(v), 4) for k, v in metrics.results_dict.items()},
         "per_class_ap50_95": dict(sorted(per_class.items(), key=lambda kv: -kv[1])),
+        "per_class_detail": dict(sorted(per_class_detail.items(), key=lambda kv: -kv[1]["ap50_95"])),
         "not_evaluable": not_evaluable,
         "per_group_ap50_95": group_means(per_class, groups),
         "run_dir": str(metrics.save_dir),

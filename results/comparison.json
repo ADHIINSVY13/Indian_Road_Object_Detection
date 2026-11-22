@@ -13,7 +13,7 @@
   },
   "finetuned": {
     "tag": "finetuned",
-    "model": "models\\best.pt",
+    "model": "C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/models/best.pt",
     "images": 10225,
     "overall": {
       "metrics/precision(B)": 0.6446,

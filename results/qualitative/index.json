@@ -1,0 +1,157 @@
+{
+  "seed": 0,
+  "split": "val",
+  "conf_display": 0.25,
+  "recall_iou": 0.5,
+  "finetuned": "C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/models/best.pt",
+  "baseline": "C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/yolo11n.pt",
+  "failure_rule": "lowest class-aware recall@IoU0.5 among 253 pool images with >= 5 GT boxes",
+  "random": [
+    {
+      "file": "random_00.jpg",
+      "stem": "rearNear__BLR-2018-05-14_11-29-33_rearNear__000594_r",
+      "gt_boxes": 7,
+      "baseline_detections": 5,
+      "finetuned_detections": 6,
+      "finetuned_recall_iou50": 0.714,
+      "median_gt_box_area_fraction": 0.0025
+    },
+    {
+      "file": "random_01.jpg",
+      "stem": "sideLeft__BLR-2018-04-19_17-46-55_sideLeft__000630_r",
+      "gt_boxes": 3,
+      "baseline_detections": 0,
+      "finetuned_detections": 0,
+      "finetuned_recall_iou50": 0.0,
+      "median_gt_box_area_fraction": 0.00016
+    },
+    {
+      "file": "random_02.jpg",
+      "stem": "frontFar__BLR-2018-04-19_17-06-55_frontFar__0017700",
+      "gt_boxes": 1,
+      "baseline_detections": 1,
+      "finetuned_detections": 1,
+      "finetuned_recall_iou50": 1.0,
+      "median_gt_box_area_fraction": 0.00428
+    },
+    {
+      "file": "random_03.jpg",
+      "stem": "highquality_16k__BLR-2018-06-19-06-21-44_part_15__0000902",
+      "gt_boxes": 18,
+      "baseline_detections": 7,
+      "finetuned_detections": 7,
+      "finetuned_recall_iou50": 0.278,
+      "median_gt_box_area_fraction": 0.00049
+    },
+    {
+      "file": "random_04.jpg",
+      "stem": "sideRight__BLR-2018-04-26_12-50-01_sideRight__0008280",
+      "gt_boxes": 8,
+      "baseline_detections": 11,
+      "finetuned_detections": 10,
+      "finetuned_recall_iou50": 1.0,
+      "median_gt_box_area_fraction": 0.02632
+    },
+    {
+      "file": "random_05.jpg",
+      "stem": "sideLeft__BLR-2018-05-29_11-08-34_sideLeft__000510_r",
+      "gt_boxes": 4,
+      "baseline_detections": 2,
+      "finetuned_detections": 7,
+      "finetuned_recall_iou50": 0.75,
+      "median_gt_box_area_fraction": 0.03333
+    },
+    {
+      "file": "random_06.jpg",
+      "stem": "rearNear__BLR-2018-06-05_08-50-18_rearNear__0009510",
+      "gt_boxes": 1,
+      "baseline_detections": 1,
+      "finetuned_detections": 2,
+      "finetuned_recall_iou50": 1.0,
+      "median_gt_box_area_fraction": 0.80863
+    },
+    {
+      "file": "random_07.jpg",
+      "stem": "highquality_16k__HYD-2018-04-26_12-50-01__0003285",
+      "gt_boxes": 27,
+      "baseline_detections": 14,
+      "finetuned_detections": 19,
+      "finetuned_recall_iou50": 0.63,
+      "median_gt_box_area_fraction": 0.00127
+    }
+  ],
+  "failure": [
+    {
+      "file": "failure_00.jpg",
+      "stem": "highquality_16k__HYD-2018-08-24_13-12-50__0007046",
+      "gt_boxes": 16,
+      "baseline_detections": 0,
+      "finetuned_detections": 0,
+      "finetuned_recall_iou50": 0.0,
+      "median_gt_box_area_fraction": 8e-05
+    },
+    {
+      "file": "failure_01.jpg",
+      "stem": "highquality_16k__HYD-2018-08-24_13-12-50__0004880",
+      "gt_boxes": 11,
+      "baseline_detections": 0,
+      "finetuned_detections": 1,
+      "finetuned_recall_iou50": 0.0,
+      "median_gt_box_area_fraction": 0.00026
+    },
+    {
+      "file": "failure_02.jpg",
+      "stem": "frontNear__BLR-2018-04-19_17-16-55_frontNear__0007920",
+      "gt_boxes": 6,
+      "baseline_detections": 0,
+      "finetuned_detections": 0,
+      "finetuned_recall_iou50": 0.0,
+      "median_gt_box_area_fraction": 0.00019
+    },
+    {
+      "file": "failure_03.jpg",
+      "stem": "frontNear__BLR-2018-04-19_17-16-55_frontNear__000804_r",
+      "gt_boxes": 6,
+      "baseline_detections": 2,
+      "finetuned_detections": 0,
+      "finetuned_recall_iou50": 0.0,
+      "median_gt_box_area_fraction": 0.00016
+    },
+    {
+      "file": "failure_04.jpg",
+      "stem": "sideRight__BLR-2018-05-14_13-59-12_sideRight__0010140",
+      "gt_boxes": 6,
+      "baseline_detections": 2,
+      "finetuned_detections": 2,
+      "finetuned_recall_iou50": 0.0,
+      "median_gt_box_area_fraction": 0.00301
+    },
+    {
+      "file": "failure_05.jpg",
+      "stem": "frontNear__BLR-2018-04-19_18-06-55_frontNear__000702_r",
+      "gt_boxes": 5,
+      "baseline_detections": 0,
+      "finetuned_detections": 0,
+      "finetuned_recall_iou50": 0.0,
+      "median_gt_box_area_fraction": 5e-05
+    },
+    {
+      "file": "failure_06.jpg",
+      "stem": "highquality_16k__HYD-2018-08-24_13-22-50__0000759",
+      "gt_boxes": 17,
+      "baseline_detections": 0,
+      "finetuned_detections": 3,
+      "finetuned_recall_iou50": 0.059,
+      "median_gt_box_area_fraction": 6e-05
+    },
+    {
+      "file": "failure_07.jpg",
+      "stem": "highquality_16k__HYD-2018-08-24_13-22-50__0000189",
+      "gt_boxes": 11,
+      "baseline_detections": 1,
+      "finetuned_detections": 1,
+      "finetuned_recall_iou50": 0.091,
+      "median_gt_box_area_fraction": 5e-05
+    }
+  ]
+}

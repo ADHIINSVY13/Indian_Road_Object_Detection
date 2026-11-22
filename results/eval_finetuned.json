@@ -1,6 +1,6 @@
 {
   "tag": "finetuned",
-  "model": "models\\best.pt",
+  "model": "C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/models/best.pt",
   "mode": "idd",
   "split": "val",
   "images": 10225,
@@ -34,12 +34,104 @@
     "trailer": 0.0,
     "train": 0.0
   },
+  "per_class_detail": {
+    "bus": {
+      "precision": 0.7586,
+      "recall": 0.5735,
+      "ap50": 0.637,
+      "ap50_95": 0.4866
+    },
+    "autorickshaw": {
+      "precision": 0.7264,
+      "recall": 0.5583,
+      "ap50": 0.6172,
+      "ap50_95": 0.4389
+    },
+    "car": {
+      "precision": 0.7481,
+      "recall": 0.5452,
+      "ap50": 0.6109,
+      "ap50_95": 0.4261
+    },
+    "truck": {
+      "precision": 0.6852,
+      "recall": 0.4836,
+      "ap50": 0.5443,
+      "ap50_95": 0.3923
+    },
+    "motorcycle": {
+      "precision": 0.7323,
+      "recall": 0.5436,
+      "ap50": 0.5946,
+      "ap50_95": 0.353
+    },
+    "rider": {
+      "precision": 0.7353,
+      "recall": 0.4237,
+      "ap50": 0.4905,
+      "ap50_95": 0.2764
+    },
+    "person": {
+      "precision": 0.6906,
+      "recall": 0.3595,
+      "ap50": 0.4233,
+      "ap50_95": 0.2305
+    },
+    "bicycle": {
+      "precision": 0.5031,
+      "recall": 0.2384,
+      "ap50": 0.2572,
+      "ap50_95": 0.1531
+    },
+    "traffic sign": {
+      "precision": 0.5206,
+      "recall": 0.1971,
+      "ap50": 0.2109,
+      "ap50_95": 0.1075
+    },
+    "animal": {
+      "precision": 0.4866,
+      "recall": 0.1493,
+      "ap50": 0.1695,
+      "ap50_95": 0.0836
+    },
+    "traffic light": {
+      "precision": 0.5956,
+      "recall": 0.0801,
+      "ap50": 0.1192,
+      "ap50_95": 0.0588
+    },
+    "vehicle fallback": {
+      "precision": 0.4871,
+      "recall": 0.042,
+      "ap50": 0.0566,
+      "ap50_95": 0.03
+    },
+    "caravan": {
+      "precision": 1.0,
+      "recall": 0.0,
+      "ap50": 0.0,
+      "ap50_95": 0.0
+    },
+    "trailer": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "ap50": 0.0,
+      "ap50_95": 0.0
+    },
+    "train": {
+      "precision": 1.0,
+      "recall": 0.0,
+      "ap50": 0.0,
+      "ap50_95": 0.0
+    }
+  },
   "not_evaluable": {},
   "per_group_ap50_95": {
     "ambiguous": 0.1558,
     "common": 0.2626,
     "india_specific": 0.1172
   },
-  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\runs\\detect\\val4",
-  "command": "scripts\\evaluate.py --model models\\best.pt --tag finetuned --batch 32"
+  "run_dir": "C:\\Users\\ASUS\\Desktop\\ML_practice_class\\Object_detection_Project\\P07_Indian_Road_Object_Detection\\runs\\detect\\val7",
+  "command": "scripts/evaluate.py --config C:\\Users\\ASUS\\AppData\\Local\\Temp/dataset_abs.yaml --model C:/Users/ASUS/Desktop/ML_practice_class/Object_detection_Project/P07_Indian_Road_Object_Detection/models/best.pt --tag finetuned --work-dir C:/p07eval"
 }
