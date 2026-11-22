@@ -73,7 +73,7 @@ behind them, and likely questions about the code.
 
 ## Repository layout
 `configs/` configuration, `src/` library code, `scripts/` command-line entry points, `notebooks/` analysis,
-`results/` generated outputs, `docs/` and `report/` write-ups. The dataset and model weights are never committed.
+`results/` generated outputs, `docs/` and `report/` write-ups (the submission report is `report/P07_Report_ELCVIA.docx`, with a PDF copy). The dataset and model weights are never committed.
 
 ## Integrity rule
 Every number or figure must come from an executed run; nothing is ever invented.
